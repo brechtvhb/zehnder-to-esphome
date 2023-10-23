@@ -12,5 +12,5 @@ UART2 tx=14, rx=12
 UART3 rx=32, tx=33  
 (https://forum.arduino.cc/t/using-hidden-uarts-in-lolin-d32-pro/608288/4)
 
-##Sparkfun MAX2323 beakout board
+## Sparkfun MAX2323 beakout board
 https://www.sparkfun.com/products/11189
