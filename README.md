@@ -1,6 +1,4 @@
-# zehnder-to-esphome
-
-## based onn
+## Based on
 
 https://github.com/wichers/esphome-comfoair (original)
 
