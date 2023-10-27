@@ -15,6 +15,6 @@ https://forum.arduino.cc/t/using-hidden-uarts-in-lolin-d32-pro/608288/4
 
 ## [Sparkfun MAX2323 beakout board](https://www.sparkfun.com/products/11189)
 <img src="https://github.com/brechtvhb/zehnder-to-esphome/blob/main/doc/BOB-11189%20hookup.jpg" alt="MAX2323" width="400"/>  
-
+<img src="doc/ttl-MAX232.png" alt="MAX2323"  width="400"/>  
 # Custom PCB (fritzing)
 **TODO**
