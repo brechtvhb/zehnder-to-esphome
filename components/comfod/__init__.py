@@ -126,12 +126,6 @@ async def to_code(config):
     uart_comfod = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
     uart_comfosense = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
 
-    if not isinstance(uart_comfod, uart.UARTComponent):
-        raise ValueError(f"ID {config[REQUIRED_KEY_UART_COMFOD]} is not a valid UARTComponent!")
-    
-    if not isinstance(uart_comfosense, uart.UARTComponent):
-        raise ValueError(f"uart_comfosense {config[REQUIRED_KEY_UART_COMFOSENSE]} is not a UARTComponent!")
-    
     cg.add(var.set_uart_comfod(uart_comfod))
     cg.add(var.set_uart_comfosense(uart_comfosense))
     
