@@ -12,7 +12,7 @@
 namespace esphome {
 namespace comfod {
 
-class ComfoDComponent : public climate::Climate, PollingComponent, uart::UARTDevice {
+class ComfoDComponent : public climate::Climate, public PollingComponent, public uart::UARTDevice {
 public:
 
   ComfoDComponent()
