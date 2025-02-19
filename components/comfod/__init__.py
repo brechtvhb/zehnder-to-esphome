@@ -241,31 +241,31 @@ async def to_code(config):
 
     if CONF_IS_BYPASS_VALVE_OPEN in config:
         sensor_id = config[CONF_IS_BYPASS_VALVE_OPEN]
-        sensor = await binary_sensor.new_binary_sensor(sensor_id)
+        sens = await binary_sensor.new_binary_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_IS_BYPASS_VALVE_OPEN)
         cg.add(func(sens))
 
     if CONF_IS_PREHEATING in config:
         sensor_id = config[CONF_IS_PREHEATING]
-        sensor = await binary_sensor.new_binary_sensor(sensor_id)
+        sens = await binary_sensor.new_binary_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_IS_PREHEATING)
         cg.add(func(sens))
 
     if CONF_IS_SUMMER_MODE in config:
         sensor_id = config[CONF_IS_SUMMER_MODE]
-        sensor = await binary_sensor.new_binary_sensor(sensor_id)
+        sens = await binary_sensor.new_binary_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_IS_SUMMER_MODE)
         cg.add(func(sens))
 
     if CONF_IS_SUPPLY_FAN_ACTIVE in config:
         sensor_id = config[CONF_IS_SUPPLY_FAN_ACTIVE]
-        sensor = await binary_sensor.new_binary_sensor(sensor_id)
+        sens = await binary_sensor.new_binary_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_IS_SUPPLY_FAN_ACTIVE)
         cg.add(func(sens))
 
     if CONF_IS_FILTER_FULL in config:
         sensor_id = config[CONF_IS_FILTER_FULL]
-        sensor = await binary_sensor.new_binary_sensor(sensor_id)
+        sens = await binary_sensor.new_binary_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_IS_FILTER_FULL)
         cg.add(func(sens))
 
