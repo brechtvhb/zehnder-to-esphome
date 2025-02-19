@@ -203,8 +203,8 @@ public:
   }
 
   void set_name(const char* value) {name = value;}
-  void set_uart_comfod(uart::UARTComponent *uart_comfod) { uart_comfod = uart_comfod; }
-  void set_uart_comfosense(uart::UARTComponent *uart_comfosense) { uart_comfosense = uart_comfosense; }
+  void set_uart_comfod(uart::UARTComponent *uart_comfod) { this->uart_comfod = uart_comfod; }
+  void set_uart_comfosense(uart::UARTComponent *uart_comfosense) { this->uart_comfosense = uart_comfosense; }
   
   void update_ewt_reheater_state_(uint8_t* msg) {
     //set input numbers
