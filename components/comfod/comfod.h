@@ -293,7 +293,7 @@ public:
     }
 
     ESP_LOGI(TAG, "Configuring EWT & Reheater settings. Low Temperature: %.1f, High Temperature: %.1f, EWT speed up: %i%, Kitchen hood speed up percentage: %i%, Reheating target temperature: %i", low_temperature, high_temperature, ewt_speed_up_percentage, kitchen_hood_speed_up_percentage, reheating_target_temperature);
-    uint8_t command[COMFOD_SET_EWT_REHEATING_LENGTH] = {(uint8_t) ((low_temperature + 20.0f) * 2.0f), (uint8_t) ((high_temperature + 20.0f) * 2.0f), (uint8_t) (ewt_speed_up_percentage), (uint8_t) (kitchen_hood_speed_up_percentage), (uint8_t) ((reheating_target_temperature + 20.0f) * 2.0f)};
+    uint8_t command[COMFOD_SET_EWT_REHEATING_LENGTH] = {(uint8_t) low_temperature, (uint8_t) high_temperature, (uint8_t) ewt_speed_up_percentage, (uint8_t) kitchen_hood_speed_up_percentage, (uint8_t) reheating_target_temperature};
     write_command_(COMFOD_SET_EWT_REHEATING_REQUEST, command, sizeof(command));
   }
   
