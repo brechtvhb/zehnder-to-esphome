@@ -234,22 +234,18 @@ public:
   }
 
   void set_ewt_low_temperature_value(float value) {
+    configure_ewt_reheating_settings_(value, ewt_high_temperature->state, ewt_speed_up_percentage->state, kitchen_hood_speed_up_percentage->state, reheating_target_temperature->state);
     ewt_low_temperature->publish_state(value);
-    configure_ewt_();
   }
   void set_ewt_high_temperature_value(float vlaue) {
+    configure_ewt_reheating_settings_(ewt_low_temperature->state, vlaue, ewt_speed_up_percentage->state, kitchen_hood_speed_up_percentage->state, reheating_target_temperature->state);
     ewt_high_temperature->publish_state(vlaue);
-    configure_ewt_();
   }
   void set_ewt_speed_up_percentage_value(int value) {
+    configure_ewt_reheating_settings_(ewt_low_temperature->state, ewt_high_temperature->state, value, kitchen_hood_speed_up_percentage->state, reheating_target_temperature->state);
     ewt_speed_up_percentage->publish_state(value);
-    configure_ewt_();
   }
   
-  void configure_ewt_() {
-    configure_ewt_reheating_settings_(ewt_low_temperature->state, ewt_high_temperature->state, ewt_speed_up_percentage->state, kitchen_hood_speed_up_percentage->state, reheating_target_temperature->state);
-  }
-
  protected:
 
   void set_level_(int level) {
