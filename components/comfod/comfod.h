@@ -12,8 +12,6 @@
 namespace esphome {
 namespace comfod {
 
-static const char *TAG = "comfod";
-
 class ComfoDComponent : public climate::Climate, PollingComponent, uart::UARTDevice {
 public:
 
