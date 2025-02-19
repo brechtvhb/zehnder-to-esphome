@@ -16,7 +16,7 @@ class ComfoDComponent : public climate::Climate, public PollingComponent, public
 public:
 
   ComfoDComponent()
-    : Climate(), PollingComponent(600) {}
+    : Climate(), PollingComponent(1000) {}
 
   /// Return the traits of this controller.
   climate::ClimateTraits traits() override {
@@ -207,25 +207,25 @@ public:
   void set_uart_comfosense(uart::UARTComponent *uart_comfosense) { this->uart_comfosense = uart_comfosense; }
   
   void update_ewt_reheater_state_(uint8_t* msg) {
-    //set input numbers
-    if (ewt_low_temperature != nullptr && ewt_low_temperature->state != (float) msg[0] / 2.0f - 20.0f) {
-      ewt_low_temperature->publish_state((float) msg[0] / 2.0f - 20.0f);
-    }
-    if (ewt_high_temperature != nullptr && ewt_high_temperature->state != (float) msg[1] / 2.0f - 20.0f) {
-      ewt_high_temperature->publish_state((float) msg[1] / 2.0f - 20.0f);
-    }
-    if (ewt_speed_up_percentage != nullptr && ewt_speed_up_percentage->state != msg[2]) {
-      ewt_speed_up_percentage->publish_state(msg[2]);
-    }
-  
-    //kitchen hood speed up %
-    if (kitchen_hood_speed_up_percentage != nullptr && kitchen_hood_speed_up_percentage->state != msg[3]) {
-      kitchen_hood_speed_up_percentage->publish_state(msg[3]);
-    }
-    // reheating target temperature
-    if (reheating_target_temperature != nullptr && reheating_target_temperature->state != (float) msg[6] / 2.0f - 20.0f) {
-      reheating_target_temperature->publish_state((float) msg[6] / 2.0f - 20.0f);
-    }
+  //set input numbers
+  if (ewt_low_temperature_number != nullptr && ewt_low_temperature_number->state != msg[0]) {
+    ewt_low_temperature_number->publish_state(msg[0]);
+  }
+  if (ewt_high_temperature_number != nullptr && ewt_high_temperature_number->state != msg[1]) {
+    ewt_high_temperature_number->publish_state(msg[1]);
+  }
+  if (ewt_speed_up_percentage_number != nullptr && ewt_speed_up_percentage_number->state != msg[2]) {
+    ewt_speed_up_percentage_number->publish_state(msg[2]);
+  }
+
+  //kitchen hood speed up %
+  if (kitchen_hood_speed_up_percentage != nullptr && kitchen_hood_speed_up_percentage->state != msg[3]) {
+    kitchen_hood_speed_up_percentage->publish_state(msg[3]);
+  }
+  // reheating target temperature
+  if (reheating_target_temperature != nullptr && reheating_target_temperature->state != msg[6]) {
+    reheating_target_temperature->publish_state(msg[6]);
+  }
   }
 
   void set_ewt_low_temperature_value(float value) {
