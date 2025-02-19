@@ -157,8 +157,8 @@ public:
       auto check = check_byte_(comfosense_data_, comfosense_data_index_);
       if (!check.has_value()) {
         ESP_LOGI(TAG, "Proxying command 0x%02X from ComfoSense to ComfoD with %i bytes.", comfosense_data_[COMFOD_MSG_IDENTIFIER_IDX], comfosense_data_index_+1);
-        uart_comfod_->write_array(comfosense_data_, comfosense_data_index_+1);
-        uart_comfod_->flush();
+        uart_comfod->write_array(comfosense_data_, comfosense_data_index_+1);
+        uart_comfod->flush();
         comfosense_data_index_ = 0;
         break;
       } else if (!*check) {
@@ -170,8 +170,8 @@ public:
       }
     }
 
-    while (uart_comfod_->available() != 0) {
-      uart_comfod_->read_byte(&comfod_data_[comfod_data_index_]);
+    while (uart_comfod->available() != 0) {
+      uart_comfod->read_byte(&comfod_data_[comfod_data_index_]);
       auto check = check_byte_(comfod_data_, comfod_data_index_);
       if (!check.has_value()) {
 
@@ -203,8 +203,8 @@ public:
   }
 
   void set_name(const char* value) {name = value;}
-  void set_uart_comfod(uart::UARTComponent *uart_comfod) { uart_comfod_ = uart_comfod; }
-  void set_uart_comfosense(uart::UARTComponent *uart_comfosense) { uart_comfosense_ = uart_comfosense; }
+  void set_uart_comfod(uart::UARTComponent *uart_comfod) { uart_comfod = uart_comfod; }
+  void set_uart_comfosense(uart::UARTComponent *uart_comfosense) { uart_comfosense = uart_comfosense; }
   
   void update_ewt_reheater_state_(uint8_t* msg) {
     //set input numbers
@@ -309,20 +309,20 @@ public:
   }
 
   void write_command_(const uint8_t command, const uint8_t *command_data, uint8_t command_data_length) {
-    uart_comfod_->write_byte(COMFOD_MSG_PREFIX);
-    uart_comfod_->write_byte(COMFOD_MSG_HEAD);
-    uart_comfod_->write_byte(0x00);
-    uart_comfod_->write_byte(command);
-    uart_comfod_->write_byte(command_data_length);
+    uart_comfod->write_byte(COMFOD_MSG_PREFIX);
+    uart_comfod->write_byte(COMFOD_MSG_HEAD);
+    uart_comfod->write_byte(0x00);
+    uart_comfod->write_byte(command);
+    uart_comfod->write_byte(command_data_length);
     if (command_data_length > 0) {
-      uart_comfod_->write_array(command_data, command_data_length);
-      uart_comfod_->write_byte((command + command_data_length + comfod_checksum_(command_data, command_data_length)) & 0xff);
+      uart_comfod->write_array(command_data, command_data_length);
+      uart_comfod->write_byte((command + command_data_length + comfod_checksum_(command_data, command_data_length)) & 0xff);
     } else {
-      uart_comfod_->write_byte(comfod_checksum_(&command, 1));
+      uart_comfod->write_byte(comfod_checksum_(&command, 1));
     }
-    uart_comfod_->write_byte(COMFOD_MSG_PREFIX);
-    uart_comfod_->write_byte(COMFOD_MSG_TAIL);
-    uart_comfod_->flush();
+    uart_comfod->write_byte(COMFOD_MSG_PREFIX);
+    uart_comfod->write_byte(COMFOD_MSG_TAIL);
+    uart_comfod->flush();
   }
 
   uint8_t comfod_checksum_(const uint8_t *command_data, uint8_t length) const {
@@ -656,8 +656,8 @@ public:
   uint8_t connector_board_version_[14]{0};
   const char* name{0};
   
-  uart::UARTComponent* uart_comfod_;
-  uart::UARTComponent* uart_comfosense_;
+  uart::UARTComponent* uart_comfod;
+  uart::UARTComponent* uart_comfosense;
   
 public:
   sensor::Sensor *fan_supply_air_percentage{nullptr};
