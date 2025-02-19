@@ -413,11 +413,11 @@ public:
           if (fan_exhaust_air_percentage != nullptr && fan_exhaust_air_percentage->state != msg[1]) {
             fan_exhaust_air_percentage->publish_state(msg[1]);
           }
-          if (fan_speed_supply != nullptr && fan_speed_supply->state != 1875000.0f / get_uint16_(2)) {
-            fan_speed_supply->publish_state(1875000.0f / get_uint16_(2));
+          if (fan_speed_supply != nullptr && fan_speed_supply->state != std::round(n1875000.0f / get_uint16_(2))) {
+            fan_speed_supply->publish_state(std::round(n1875000.0f / get_uint16_(2)));
           }
-          if (fan_speed_exhaust != nullptr && fan_speed_exhaust->state != 1875000.0f / get_uint16_(4)) {
-            fan_speed_exhaust->publish_state(1875000.0f / get_uint16_(4));
+          if (fan_speed_exhaust != nullptr && fan_speed_exhaust->state != std::round(1875000.0f / get_uint16_(4))) {
+            fan_speed_exhaust->publish_state(std::round(1875000.0f / get_uint16_(4)));
           }
           break;
         }
