@@ -208,14 +208,14 @@ public:
   
   void update_ewt_reheater_state_(uint8_t* msg) {
   //set input numbers
-  if (ewt_low_temperature_number != nullptr && ewt_low_temperature_number->state != msg[0]) {
-    ewt_low_temperature_number->publish_state(msg[0]);
+  if (ewt_low_temperature != nullptr && ewt_low_temperature->state != msg[0]) {
+    ewt_low_temperature->publish_state(msg[0]);
   }
-  if (ewt_high_temperature_number != nullptr && ewt_high_temperature_number->state != msg[1]) {
-    ewt_high_temperature_number->publish_state(msg[1]);
+  if (ewt_high_temperature != nullptr && ewt_high_temperature->state != msg[1]) {
+    ewt_high_temperature->publish_state(msg[1]);
   }
-  if (ewt_speed_up_percentage_number != nullptr && ewt_speed_up_percentage_number->state != msg[2]) {
-    ewt_speed_up_percentage_number->publish_state(msg[2]);
+  if (ewt_speed_up_percentage != nullptr && ewt_speed_up_percentage->state != msg[2]) {
+    ewt_speed_up_percentage->publish_state(msg[2]);
   }
 
   //kitchen hood speed up %
