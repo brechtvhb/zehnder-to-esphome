@@ -139,7 +139,7 @@ async def to_code(config):
     sens = None
     if CONF_FAN_SUPPLY_AIR_PERCENTAGE in config:
         sensor_id = config[CONF_FAN_SUPPLY_AIR_PERCENTAGE]
-        sens = yield sensor.new_sensor(sensor_id)
+        sens = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_FAN_SUPPLY_AIR_PERCENTAGE)
         cg.add(func(sens))
 
