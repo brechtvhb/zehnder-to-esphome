@@ -269,12 +269,12 @@ public:
   void configure_ewt_reheating_settings_(float low_temperature, float high_temperature, int ewt_speed_up_percentage, int kitchen_hood_speed_up_percentage, int reheating_target_temperature) {
     if (low_temperature < 0 || low_temperature > 15) {
       ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. Low temperature: %i", low_temperature);
-      return;
+      low_temperature = 0:
     }
     
     if (high_temperature < 10 || high_temperature > 25) {
-      ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. High temperature: %i", low_temperature);
-      return;
+      ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. High temperature: %i", high_temperature);
+      high_temperature = 25;
     }
     
     if (ewt_speed_up_percentage < 0 || ewt_speed_up_percentage > 99) {
