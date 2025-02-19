@@ -705,6 +705,8 @@ public:
   void set_ewt_low_temperature(sensor::Sensor *ewt_low_temperature) { this->ewt_low_temperature = ewt_low_temperature; }
   void set_ewt_high_temperature(sensor::Sensor *ewt_high_temperature) { this->ewt_high_temperature = ewt_high_temperature; }
   void set_ewt_speed_up_percentage(sensor::Sensor *ewt_speed_up_percentage) { this->ewt_speed_up_percentage = ewt_speed_up_percentage; }
+  void set_kitchen_hood_speed_up_percentage(sensor::Sensor *kitchen_hood_speed_up_percentage) { this->kitchen_hood_speed_up_percentage = kitchen_hood_speed_up_percentage; }
+  void set_reheating_target_temperature(sensor::Sensor *reheating_target_temperature) { this->reheating_target_temperature = reheating_target_temperature; }
   void set_kitchen_hood_temperature(sensor::Sensor *kitchen_hood_temperature) { this->kitchen_hood_temperature = kitchen_hood_temperature; }
   void set_reheating_temperature(sensor::Sensor *reheating_temperature) { this->reheating_temperature = reheating_temperature; }
   void set_return_air_level(sensor::Sensor *return_air_level) { this->return_air_level = return_air_level; }
