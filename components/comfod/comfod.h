@@ -285,7 +285,6 @@ public:
     if (kitchen_hood_speed_up_percentage < 0 || kitchen_hood_speed_up_percentage > 99) {
       ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. Kitchen hood speed up percentage: %i", kitchen_hood_speed_up_percentage);
       kitchen_hood_speed_up_percentage = 0;
-      return;
     }
 
     if (reheating_target_temperature < 5 || reheating_target_temperature > 40) {
