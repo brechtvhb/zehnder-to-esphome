@@ -111,11 +111,12 @@ cv.Optional(CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE): sensor.sensor_schema(device_
 })
 
 CONFIG_SCHEMA = cv.All(
-    cv.Schema( {
+    cv
+    .Schema({
         cv.GenerateID(CONF_ID): cv.declare_id(ComfoDComponent),
         cv.Required(REQUIRED_KEY_NAME): cv.string,
-        cv.Required(REQUIRED_KEY_UART_COMFOD): cv.string,
-        cv.Optional(REQUIRED_KEY_UART_COMFOSENSE): cv.string,
+        cv.Required(REQUIRED_KEY_UART_COMFOD): cv.use_id(uart.UARTComponent),
+        cv.Optional(REQUIRED_KEY_UART_COMFOSENSE): cv.use_id(uart.UARTComponent), 
     })
     .extend(comfod_sensors_schemas)
     .extend(cv.COMPONENT_SCHEMA)
