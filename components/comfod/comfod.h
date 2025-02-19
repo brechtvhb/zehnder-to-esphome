@@ -279,17 +279,18 @@ public:
     
     if (ewt_speed_up_percentage < 0 || ewt_speed_up_percentage > 99) {
       ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. Speed up percentage: %i", ewt_speed_up_percentage);
-      return;
+      ewt_speed_up_percentage = 0;
     }
     
     if (kitchen_hood_speed_up_percentage < 0 || kitchen_hood_speed_up_percentage > 99) {
       ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. Kitchen hood speed up percentage: %i", kitchen_hood_speed_up_percentage);
+      kitchen_hood_speed_up_percentage = 0;
       return;
     }
 
     if (reheating_target_temperature < 5 || reheating_target_temperature > 40) {
       ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. Reheater temperature: %i", reheating_target_temperature);
-      return;
+      reheating_target_temperature = 5;
     }
 
     ESP_LOGI(TAG, "Configuring EWT & Reheater settings. Low Temperature: %.1f, High Temperature: %.1f, EWT speed up: %i%, Kitchen hood speed up percentage: %i%, Reheating target temperature: %i", low_temperature, high_temperature, ewt_speed_up_percentage, kitchen_hood_speed_up_percentage, reheating_target_temperature);
