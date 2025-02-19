@@ -123,14 +123,19 @@ CONFIG_SCHEMA = cv.All(
 
 def to_code(config):
     """Generates code"""
+    uart_comfod = yield cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
+    uart_comfosense = yield cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
+
     var = cg.new_Pvariable(config[CONF_ID])
+    cg.add(var.set_uart_comfod(uart_comfod))
+    cg.add(var.set_uart_comfosense(uart_comfosense))
     yield cg.register_component(var, config)
 
     cg.add(var.set_name(config[REQUIRED_KEY_NAME]))
-    uart_comfod = yield cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
-    uart_comfosense = yield cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
-    cg.add(var.set_uart_comfod(uart_comfod))
-    cg.add(var.set_uart_comfosense(uart_comfosense))
+    # uart_comfod = yield cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
+    # uart_comfosense = yield cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
+    # cg.add(var.set_uart_comfod(uart_comfod))
+    # cg.add(var.set_uart_comfosense(uart_comfosense))
 
     if CONF_FAN_SUPPLY_AIR_PERCENTAGE in config:
         sensor_id = config[CONF_FAN_SUPPLY_AIR_PERCENTAGE]
