@@ -690,31 +690,31 @@ public:
   sensor::Sensor *kitchen_hood_speed_up_percentage{nullptr};
   sensor::Sensor *reheating_target_temperature{nullptr};
 
-  set_fan_supply_air_percentage(sensor::Sensor *fan_supply_air_percentage) { this->fan_supply_air_percentage = fan_supply_air_percentage; }
-  set_fan_exhaust_air_percentage(sensor::Sensor *fan_exhaust_air_percentage) { this->fan_exhaust_air_percentage = fan_exhaust_air_percentage; }
-  set_fan_speed_supply(sensor::Sensor *fan_speed_supply) { this->fan_speed_supply = fan_speed_supply; }
-  set_fan_speed_exhaust(sensor::Sensor *fan_speed_exhaust) { this->fan_speed_exhaust = fan_speed_exhaust; }
-  set_is_bypass_valve_open(binary_sensor::BinarySensor *is_bypass_valve_open) { this->is_bypass_valve_open = is_bypass_valve_open; }
-  set_is_preheating(binary_sensor::BinarySensor *is_preheating) { this->is_preheating = is_preheating; }
-  set_outside_air_temperature(sensor::Sensor *outside_air_temperature) { this->outside_air_temperature = outside_air_temperature; }
-  set_supply_air_temperature(sensor::Sensor *supply_air_temperature) { this->supply_air_temperature = supply_air_temperature; }
-  set_return_air_temperature(sensor::Sensor *return_air_temperature) { this->return_air_temperature = return_air_temperature; }
-  set_exhaust_air_temperature(sensor::Sensor *exhaust_air_temperature) { this->exhaust_air_temperature = exhaust_air_temperature; }
-  set_enthalpy_temperature(sensor::Sensor *enthalpy_temperature) { this->enthalpy_temperature = enthalpy_temperature; }
-  set_ewt_temperature(sensor::Sensor *ewt_temperature) { this->ewt_temperature = ewt_temperature; }
-  set_ewt_low_temperature(sensor::Sensor *ewt_low_temperature) { this->ewt_low_temperature = ewt_low_temperature; }
-  set_ewt_high_temperature(sensor::Sensor *ewt_high_temperature) { this->ewt_high_temperature = ewt_high_temperature; }
-  set_ewt_speed_up_percentage(sensor::Sensor *ewt_speed_up_percentage) { this->ewt_speed_up_percentage = ewt_speed_up_percentage; }
-  set_kitchen_hood_temperature(sensor::Sensor *kitchen_hood_temperature) { this->kitchen_hood_temperature = kitchen_hood_temperature; }
-  set_reheating_temperature(sensor::Sensor *reheating_temperature) { this->reheating_temperature = reheating_temperature; }
-  set_return_air_level(sensor::Sensor *return_air_level) { this->return_air_level = return_air_level; }
-  set_supply_air_level(sensor::Sensor *supply_air_level) { this->supply_air_level = supply_air_level; }
-  set_is_supply_fan_active(binary_sensor::BinarySensor *is_supply_fan_active) { this->is_supply_fan_active = is_supply_fan_active; }
-  set_is_filter_full(binary_sensor::BinarySensor *is_filter_full) { this->is_filter_full = is_filter_full; }
-  set_bypass_factor(sensor::Sensor *bypass_factor) { this->bypass_factor = bypass_factor; }
-  set_bypass_step(sensor::Sensor *bypass_step) { this->bypass_step = bypass_step; }
-  set_bypass_correction(sensor::Sensor *bypass_correction) { this->bypass_correction = bypass_correction; }
-  set_is_summer_mode(binary_sensor::BinarySensor *is_summer_mode) { this->is_summer_mode = is_summer_mode; }
+  void set_fan_supply_air_percentage(sensor::Sensor *fan_supply_air_percentage) { this->fan_supply_air_percentage = fan_supply_air_percentage; }
+  void set_fan_exhaust_air_percentage(sensor::Sensor *fan_exhaust_air_percentage) { this->fan_exhaust_air_percentage = fan_exhaust_air_percentage; }
+  void set_fan_speed_supply(sensor::Sensor *fan_speed_supply) { this->fan_speed_supply = fan_speed_supply; }
+  void set_fan_speed_exhaust(sensor::Sensor *fan_speed_exhaust) { this->fan_speed_exhaust = fan_speed_exhaust; }
+  void set_is_bypass_valve_open(binary_sensor::BinarySensor *is_bypass_valve_open) { this->is_bypass_valve_open = is_bypass_valve_open; }
+  void set_is_preheating(binary_sensor::BinarySensor *is_preheating) { this->is_preheating = is_preheating; }
+  void set_outside_air_temperature(sensor::Sensor *outside_air_temperature) { this->outside_air_temperature = outside_air_temperature; }
+  void set_supply_air_temperature(sensor::Sensor *supply_air_temperature) { this->supply_air_temperature = supply_air_temperature; }
+  void set_return_air_temperature(sensor::Sensor *return_air_temperature) { this->return_air_temperature = return_air_temperature; }
+  void set_exhaust_air_temperature(sensor::Sensor *exhaust_air_temperature) { this->exhaust_air_temperature = exhaust_air_temperature; }
+  void set_enthalpy_temperature(sensor::Sensor *enthalpy_temperature) { this->enthalpy_temperature = enthalpy_temperature; }
+  void set_ewt_temperature(sensor::Sensor *ewt_temperature) { this->ewt_temperature = ewt_temperature; }
+  void set_ewt_low_temperature(sensor::Sensor *ewt_low_temperature) { this->ewt_low_temperature = ewt_low_temperature; }
+  void set_ewt_high_temperature(sensor::Sensor *ewt_high_temperature) { this->ewt_high_temperature = ewt_high_temperature; }
+  void set_ewt_speed_up_percentage(sensor::Sensor *ewt_speed_up_percentage) { this->ewt_speed_up_percentage = ewt_speed_up_percentage; }
+  void set_kitchen_hood_temperature(sensor::Sensor *kitchen_hood_temperature) { this->kitchen_hood_temperature = kitchen_hood_temperature; }
+  void set_reheating_temperature(sensor::Sensor *reheating_temperature) { this->reheating_temperature = reheating_temperature; }
+  void set_return_air_level(sensor::Sensor *return_air_level) { this->return_air_level = return_air_level; }
+  void set_supply_air_level(sensor::Sensor *supply_air_level) { this->supply_air_level = supply_air_level; }
+  void set_is_supply_fan_active(binary_sensor::BinarySensor *is_supply_fan_active) { this->is_supply_fan_active = is_supply_fan_active; }
+  void set_is_filter_full(binary_sensor::BinarySensor *is_filter_full) { this->is_filter_full = is_filter_full; }
+  void set_bypass_factor(sensor::Sensor *bypass_factor) { this->bypass_factor = bypass_factor; }
+  void set_bypass_step(sensor::Sensor *bypass_step) { this->bypass_step = bypass_step; }
+  void set_bypass_correction(sensor::Sensor *bypass_correction) { this->bypass_correction = bypass_correction; }
+  void set_is_summer_mode(binary_sensor::BinarySensor *is_summer_mode) { this->is_summer_mode = is_summer_mode; }
 };
 
 }  // namespace comfod
