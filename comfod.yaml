@@ -75,8 +75,8 @@ binary_sensor:
 comfod:
   name: "Zehnder Comfo D"
   id: "zehnder_comfo_d"
-  uart_comfod: id(uart_comfod)
-  uart_comfosense: id(uart_comfosense)
+  uart_comfod_id: id(uart_comfod)
+  uart_comfosense_id: id(uart_comfosense)
   fan_supply_air_percentage:
     name: "fan_supply_air_percentage"
   fan_exhaust_air_percentage:

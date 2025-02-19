@@ -15,8 +15,8 @@ ComfoDComponent = comfod_ns.class_('ComfoDComponent', cg.Component)
 DEPENDENCIES=['uart']
 AUTO_LOAD = ['sensor', 'climate', 'binary_sensor', 'number', 'button']
 REQUIRED_KEY_NAME = "name"
-REQUIRED_KEY_UART_COMFOD = "uart_comfod"
-REQUIRED_KEY_UART_COMFOSENSE = "uart_comfosense"
+REQUIRED_KEY_UART_COMFOD = "uart_comfod_id"
+REQUIRED_KEY_UART_COMFOSENSE = "uart_comfosense_id"
 CONF_HUB_ID = 'comfod'
 
 CONF_FAN_SUPPLY_AIR_PERCENTAGE = "fan_supply_air_percentage"
