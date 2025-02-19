@@ -1,7 +1,7 @@
 """ Creates module comfod """
 import esphome.config_validation as cv
 import esphome.codegen as cg
-from esphome.components import binary_sensor, sensor, text_sensor, uart
+from esphome.components import binary_sensor, sensor, uart
 from esphome.const import (CONF_ID, DEVICE_CLASS_CURRENT,
                            DEVICE_CLASS_EMPTY, DEVICE_CLASS_SPEED,
                            DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_VOLUME,
@@ -13,7 +13,7 @@ comfod_ns = cg.esphome_ns.namespace('comfod')
 ComfoDComponent = comfod_ns.class_('ComfoDComponent', cg.Component)
 
 DEPENDENCIES=['uart']
-AUTO_LOAD = ['sensor', 'climate', 'binary_sensor', 'number', 'button']
+AUTO_LOAD = ['sensor', 'climate', 'binary_sensor']
 REQUIRED_KEY_NAME = "name"
 REQUIRED_KEY_UART_COMFOD = "uart_comfod_id"
 REQUIRED_KEY_UART_COMFOSENSE = "uart_comfosense_id"
@@ -139,7 +139,7 @@ async def to_code(config):
     sens = None
     if CONF_FAN_SUPPLY_AIR_PERCENTAGE in config:
         sensor_id = config[CONF_FAN_SUPPLY_AIR_PERCENTAGE]
-        sens = await sensor.new_sensor(sensor_id)
+        sens = yield sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_FAN_SUPPLY_AIR_PERCENTAGE)
         cg.add(func(sens))
 
