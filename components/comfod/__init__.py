@@ -123,10 +123,11 @@ CONFIG_SCHEMA = cv.All(
 
 async def to_code(config):
     """Generates code"""
+    var = cg.new_Pvariable(config[CONF_ID])
+    
     uart_comfod = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
     uart_comfosense = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
 
-    var = cg.new_Pvariable(config[CONF_ID])
     cg.add(var.set_uart_comfod(uart_comfod))
     cg.add(var.set_uart_comfosense(uart_comfosense))
     await cg.register_component(var, config)
