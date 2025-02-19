@@ -475,7 +475,7 @@ public:
       }
       case COMFOD_GET_VENTILATION_LEVEL_RESPONSE: {
 
-        ESP_LOGD(TAG, "Level %02x", msg[8]);
+        ESP_LOGV(TAG, "Level %02x", msg[8]);
 
         if (return_air_level != nullptr && return_air_level->state != msg[6]) {
           return_air_level->publish_state(msg[6]);
@@ -580,59 +580,59 @@ public:
 
   void get_fan_status_() {
     if (fan_supply_air_percentage != nullptr || fan_exhaust_air_percentage != nullptr || fan_speed_supply != nullptr || fan_speed_exhaust != nullptr) {
-      ESP_LOGD(TAG, "getting fan status");
+      ESP_LOGV(TAG, "getting fan status");
       write_command_(COMFOD_GET_FAN_STATUS_REQUEST, nullptr, 0);
     }
   }
 
   void get_valve_status_() {
     if (is_bypass_valve_open != nullptr || is_preheating != nullptr) {
-      ESP_LOGD(TAG, "getting valve status");
+      ESP_LOGV(TAG, "getting valve status");
       write_command_(COMFOD_GET_VALVE_STATUS_REQUEST, nullptr, 0);
     }
   }
 
   void get_error_status_() {
     if (is_filter_full != nullptr) {
-      ESP_LOGD(TAG, "getting error status");
+      ESP_LOGV(TAG, "getting error status");
       write_command_(COMFOD_GET_ERROR_STATE_REQUEST, nullptr, 0);
     }
   }
 
   void get_bypass_control_status_() {
     if (bypass_factor != nullptr || bypass_step != nullptr || bypass_correction != nullptr || is_summer_mode != nullptr) {
-      ESP_LOGD(TAG, "getting bypass control");
+      ESP_LOGV(TAG, "getting bypass control");
       write_command_(COMFOD_GET_BYPASS_CONTROL_REQUEST, nullptr, 0);
     }
   }
 
   void get_ewt_reheating_status_() {
     if (kitchen_hood_speed_up_percentage != nullptr || reheating_target_temperature != nullptr) {
-      ESP_LOGD(TAG, "getting ewt reheating status");
+      ESP_LOGV(TAG, "getting ewt reheating status");
       write_command_(COMFOD_GET_EWT_REHEATER_REQUEST, nullptr, 0);
     }
   }
   void get_temperature_() {
     if (outside_air_temperature != nullptr || supply_air_temperature != nullptr || return_air_temperature != nullptr || outside_air_temperature != nullptr) {
-      ESP_LOGD(TAG, "getting temperature");
+      ESP_LOGV(TAG, "getting temperature");
       write_command_(COMFOD_GET_TEMPERATURE_REQUEST, nullptr, 0);
     }
   }
 
   void get_sensor_data_() {
     if (enthalpy_temperature != nullptr) {
-      ESP_LOGD(TAG, "getting sensor data");
+      ESP_LOGV(TAG, "getting sensor data");
       write_command_(COMFOD_GET_SENSOR_DATA_REQUEST, nullptr, 0);
     }
   }
 
   void get_ventilation_level_() {
-    ESP_LOGD(TAG, "getting ventilation level");
+    ESP_LOGV(TAG, "getting ventilation level");
     write_command_(COMFOD_GET_VENTILATION_LEVEL_REQUEST, nullptr, 0);
   }
 
   void get_temperatures_() {
-    ESP_LOGD(TAG, "getting temperatures");
+    ESP_LOGV(TAG, "getting temperatures");
     write_command_(COMFOD_GET_TEMPERATURES_REQUEST, nullptr, 0);
   }
 
