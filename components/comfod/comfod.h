@@ -649,7 +649,7 @@ public:
   uint8_t comfosense_data_[30];
   uint8_t comfosense_data_index_{0};
   
-  int8_t update_counter_{-4};
+  int8_t update_counter_{-10};
 
   uint8_t bootloader_version_[13]{0};
   uint8_t firmware_version_[13]{0};
