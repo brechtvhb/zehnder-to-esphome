@@ -656,8 +656,8 @@ public:
   uint8_t connector_board_version_[14]{0};
   const char* name{0};
   
-  UARTComponent* uart_comfod_;
-  UARTComponent* uart_comfosense_;
+  uart::UARTComponent* uart_comfod_;
+  uart::UARTComponent* uart_comfosense_;
   
 public:
   sensor::Sensor *fan_supply_air_percentage{nullptr};
