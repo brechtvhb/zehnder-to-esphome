@@ -3,13 +3,10 @@
 #include "esphome.h"
 #include "esphome/core/component.h"
 #include "esphome/components/uart/uart.h"
-#include "esphome/components/button/button.h"
-#include "esphome/components/number/number.h"
-#include "esphome/components/number/number_traits.h"
 #include "esphome/components/climate/climate.h"
 #include "esphome/components/climate/climate_mode.h"
 #include "esphome/components/climate/climate_traits.h"
-#include "esphome/components/custom/climate/custom_climate.h"
+#include "esphome/components/sensor/sensor.h"
 #include "constants.h"
 
 namespace esphome {
