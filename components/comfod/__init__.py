@@ -121,181 +121,181 @@ CONFIG_SCHEMA = cv.All(
     .extend(cv.COMPONENT_SCHEMA)
 )
 
-def to_code(config):
+async def to_code(config):
     """Generates code"""
-    uart_comfod = yield cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
-    uart_comfosense = yield cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
+    uart_comfod = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
+    uart_comfosense = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
 
     var = cg.new_Pvariable(config[CONF_ID])
     cg.add(var.set_uart_comfod(uart_comfod))
     cg.add(var.set_uart_comfosense(uart_comfosense))
-    yield cg.register_component(var, config)
+    await cg.register_component(var, config)
 
     cg.add(var.set_name(config[REQUIRED_KEY_NAME]))
-    # uart_comfod = yield cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
-    # uart_comfosense = yield cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
+    # uart_comfod = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
+    # uart_comfosense = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
     # cg.add(var.set_uart_comfod(uart_comfod))
     # cg.add(var.set_uart_comfosense(uart_comfosense))
 
     if CONF_FAN_SUPPLY_AIR_PERCENTAGE in config:
         sensor_id = config[CONF_FAN_SUPPLY_AIR_PERCENTAGE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_FAN_SUPPLY_AIR_PERCENTAGE)
         cg.add(func(sensor))
 
     if CONF_FAN_EXHAUST_AIR_PERCENTAGE in config:
         sensor_id = config[CONF_FAN_EXHAUST_AIR_PERCENTAGE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_FAN_EXHAUST_AIR_PERCENTAGE)
         cg.add(func(sensor))
 
     if CONF_FAN_SPEED_SUPPLY in config:
         sensor_id = config[CONF_FAN_SPEED_SUPPLY]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_FAN_SPEED_SUPPLY)
         cg.add(func(sensor))
 
     if CONF_FAN_SPEED_EXHAUST in config:
         sensor_id = config[CONF_FAN_SPEED_EXHAUST]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_FAN_SPEED_EXHAUST)
         cg.add(func(sensor))
 
     if CONF_OUTSIDE_AIR_TEMPERATURE in config:
         sensor_id = config[CONF_OUTSIDE_AIR_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_OUTSIDE_AIR_TEMPERATURE)
         cg.add(func(sensor))
 
     if CONF_SUPPLY_AIR_TEMPERATURE in config:
         sensor_id = config[CONF_SUPPLY_AIR_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_SUPPLY_AIR_TEMPERATURE)
         cg.add(func(sensor))
 
     if CONF_RETURN_AIR_TEMPERATURE in config:
         sensor_id = config[CONF_RETURN_AIR_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_RETURN_AIR_TEMPERATURE)
         cg.add(func(sensor))
 
     if CONF_EXHAUST_AIR_TEMPERATURE in config:
         sensor_id = config[CONF_EXHAUST_AIR_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_EXHAUST_AIR_TEMPERATURE)
         cg.add(func(sensor))
 
     if CONF_ENTHALPY_TEMPERATURE in config:
         sensor_id = config[CONF_ENTHALPY_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_ENTHALPY_TEMPERATURE)
         cg.add(func(sensor))
 
     if CONF_EWT_TEMPERATURE in config:
         sensor_id = config[CONF_EWT_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_EWT_TEMPERATURE)
         cg.add(func(sensor))
 
     if CONF_REHEATING_TEMPERATURE in config:
         sensor_id = config[CONF_REHEATING_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_REHEATING_TEMPERATURE)
         cg.add(func(sensor))
 
     if CONF_KITCHEN_HOOD_TEMPERATURE in config:
         sensor_id = config[CONF_KITCHEN_HOOD_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_KITCHEN_HOOD_TEMPERATURE)
         cg.add(func(sensor))
 
     if CONF_RETURN_AIR_LEVEL in config:
         sensor_id = config[CONF_RETURN_AIR_LEVEL]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_RETURN_AIR_LEVEL)
         cg.add(func(sensor))
 
     if CONF_SUPPLY_AIR_LEVEL in config:
         sensor_id = config[CONF_SUPPLY_AIR_LEVEL]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_SUPPLY_AIR_LEVEL)
         cg.add(func(sensor))
 
     if CONF_BYPASS_FACTOR in config:
         sensor_id = config[CONF_BYPASS_FACTOR]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_BYPASS_FACTOR)
         cg.add(func(sensor))
 
     if CONF_BYPASS_STEP in config:
         sensor_id = config[CONF_BYPASS_STEP]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_BYPASS_STEP)
         cg.add(func(sensor))
 
     if CONF_BYPASS_CORRECTION in config:
         sensor_id = config[CONF_BYPASS_CORRECTION]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_BYPASS_CORRECTION)
         cg.add(func(sensor))
 
     if CONF_IS_BYPASS_VALVE_OPEN in config:
         sensor_id = config[CONF_IS_BYPASS_VALVE_OPEN]
-        sensor = yield binary_sensor.new_binary_sensor(sensor_id)
+        sensor = await binary_sensor.new_binary_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_IS_BYPASS_VALVE_OPEN)
         cg.add(func(sensor))
 
     if CONF_IS_PREHEATING in config:
         sensor_id = config[CONF_IS_PREHEATING]
-        sensor = yield binary_sensor.new_binary_sensor(sensor_id)
+        sensor = await binary_sensor.new_binary_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_IS_PREHEATING)
         cg.add(func(sensor))
 
     if CONF_IS_SUMMER_MODE in config:
         sensor_id = config[CONF_IS_SUMMER_MODE]
-        sensor = yield binary_sensor.new_binary_sensor(sensor_id)
+        sensor = await binary_sensor.new_binary_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_IS_SUMMER_MODE)
         cg.add(func(sensor))
 
     if CONF_IS_SUPPLY_FAN_ACTIVE in config:
         sensor_id = config[CONF_IS_SUPPLY_FAN_ACTIVE]
-        sensor = yield binary_sensor.new_binary_sensor(sensor_id)
+        sensor = await binary_sensor.new_binary_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_IS_SUPPLY_FAN_ACTIVE)
         cg.add(func(sensor))
 
     if CONF_IS_FILTER_FULL in config:
         sensor_id = config[CONF_IS_FILTER_FULL]
-        sensor = yield binary_sensor.new_binary_sensor(sensor_id)
+        sensor = await binary_sensor.new_binary_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_IS_FILTER_FULL)
         cg.add(func(sensor))
 
     if CONF_EWT_LOW_TEMPERATURE in config:
         sensor_id = config[CONF_EWT_LOW_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_EWT_LOW_TEMPERATURE)
         cg.add(func(sensor))
 
     if CONF_EWT_HIGH_TEMPERATURE in config:
         sensor_id = config[CONF_EWT_HIGH_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_EWT_HIGH_TEMPERATURE)
         cg.add(func(sensor))
     
     if CONF_EWT_SPEED_UP_PERCENTAGE in config:
         sensor_id = config[CONF_EWT_SPEED_UP_PERCENTAGE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_EWT_SPEED_UP_PERCENTAGE)
         cg.add(func(sensor))
     
     if CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE in config:
         sensor_id = config[CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE)
         cg.add(func(sensor))
         
     if CONF_REHEATING_TARGET_TEMPERATURE in config:
         sensor_id = config[CONF_REHEATING_TARGET_TEMPERATURE]
-        sensor = yield sensor.new_sensor(sensor_id)
+        sensor = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_REHEATING_TARGET_TEMPERATURE)
         cg.add(func(sensor))
 
