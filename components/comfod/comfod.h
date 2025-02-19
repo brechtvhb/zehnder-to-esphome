@@ -156,14 +156,14 @@ public:
       uart_comfosense->read_byte(&comfosense_data_[comfosense_data_index_]);
       auto check = check_byte_(comfosense_data_, comfosense_data_index_);
       if (!check.has_value()) {
-        ESP_LOGI(TAG, "Proxying command 0x%02X from ComfoSense to ComfoD with %i bytes.", comfosense_data_[COMFOD_MSG_IDENTIFIER_IDX], comfosense_data_index_+1);
+        ESP_LOGV(TAG, "Proxying command 0x%02X from ComfoSense to ComfoD with %i bytes.", comfosense_data_[COMFOD_MSG_IDENTIFIER_IDX], comfosense_data_index_+1);
         uart_comfod->write_array(comfosense_data_, comfosense_data_index_+1);
         uart_comfod->flush();
         comfosense_data_index_ = 0;
         break;
       } else if (!*check) {
         // wrong data
-        ESP_LOGI(TAG, "Byte %i of received data frame is invalid.", comfosense_data_index_);
+        ESP_LOGD(TAG, "Byte %i of received data frame is invalid.", comfosense_data_index_);
         comfosense_data_index_ = 0;
       } else {
         comfosense_data_index_++;
@@ -180,13 +180,13 @@ public:
           parse_data_();
         }
         
-        ESP_LOGI(TAG, "Proxying response 0x%02X from ComfoD to ComfoSense with %i bytes.", comfod_data_[COMFOD_MSG_IDENTIFIER_IDX], comfod_data_index_+1);
+        ESP_LOGV(TAG, "Proxying response 0x%02X from ComfoD to ComfoSense with %i bytes.", comfod_data_[COMFOD_MSG_IDENTIFIER_IDX], comfod_data_index_+1);
         uart_comfosense->write_array(comfod_data_, comfod_data_index_+1);
         uart_comfosense->flush();
         comfod_data_index_ = 0;
       } else if (!*check) {
         // wrong data
-        ESP_LOGI(TAG, "Byte %i of received data frame is invalid.", comfod_data_index_);
+        ESP_LOGD(TAG, "Byte %i of received data frame is invalid.", comfod_data_index_);
         comfod_data_index_ = 0;
       } else {
         // next byte
