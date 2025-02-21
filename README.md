@@ -18,4 +18,9 @@ https://forum.arduino.cc/t/using-hidden-uarts-in-lolin-d32-pro/608288/4
 <img src="doc/ttl-MAX232.png" alt="MAX2323"  width="400"/>  
 
 # Custom PCB (fritzing)
-**TODO**
+## Breadboard
+![zehnder-with-temp-v4_bb](https://github.com/user-attachments/assets/a45bed75-f159-4308-b90f-01d5ff14f124)
+## Schema
+![zehnder-with-temp-v4_schema](https://github.com/user-attachments/assets/07b5048a-1355-4125-8b20-ed502209fe9c)
+## PCB
+![zehnder-with-temp-v4_pcb](https://github.com/user-attachments/assets/dcf24f1b-52bf-4ef1-a847-01bcbb7ba29a)
