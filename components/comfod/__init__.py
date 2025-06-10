@@ -79,8 +79,8 @@ helper_comfod_list = [
 ]
 
 comfod_sensors_schemas = cv.Schema({
-cv.Optional(CONF_FAN_SUPPLY_AIR_PERCENTAGE): sensor.sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_FAN_EXHAUST_AIR_PERCENTAGE): sensor.sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT).extend(),
+cv.Optional(CONF_FAN_SUPPLY_AIR_PERCENTAGE): sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT).extend(),
+cv.Optional(CONF_FAN_EXHAUST_AIR_PERCENTAGE): sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT).extend(),
 cv.Optional(CONF_FAN_SPEED_SUPPLY): sensor.sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT).extend(),
 cv.Optional(CONF_FAN_SPEED_EXHAUST): sensor.sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT).extend(),
 cv.Optional(CONF_OUTSIDE_AIR_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
@@ -103,9 +103,9 @@ cv.Optional(CONF_IS_SUPPLY_FAN_ACTIVE): binary_sensor.binary_sensor_schema(devic
 cv.Optional(CONF_IS_FILTER_FULL): binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY).extend(),
 cv.Optional(CONF_EWT_LOW_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
 cv.Optional(CONF_EWT_HIGH_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_EWT_SPEED_UP_PERCENTAGE): sensor.sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_PERCENT, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
+cv.Optional(CONF_EWT_SPEED_UP_PERCENTAGE): sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
 cv.Optional(CONF_REHEATING_TARGET_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE): sensor.sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_PERCENT, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
+cv.Optional(CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE): sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
 })
 
 CONFIG_SCHEMA = cv.All(
