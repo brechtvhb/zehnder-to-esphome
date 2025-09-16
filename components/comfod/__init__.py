@@ -2,12 +2,7 @@
 import esphome.config_validation as cv
 import esphome.codegen as cg
 from esphome.components import binary_sensor, sensor, uart, climate
-from esphome.const import (CONF_ID, DEVICE_CLASS_CURRENT, CONF_DISABLED_BY_DEFAULT, CONF_VISUAL, CONF_TARGET_TEMPERATURE,
-                           DEVICE_CLASS_EMPTY, DEVICE_CLASS_SPEED,
-                           DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_VOLUME,
-                           STATE_CLASS_MEASUREMENT, UNIT_AMPERE, UNIT_CELSIUS,
-                           UNIT_CUBIC_METER, UNIT_HOUR, UNIT_MINUTE,
-                           UNIT_PERCENT, UNIT_REVOLUTIONS_PER_MINUTE)
+from esphome.const import *
 
 comfod_ns = cg.esphome_ns.namespace('comfod')
 climate_ns = cg.esphome_ns.namespace("climate")
