@@ -120,7 +120,9 @@ CONFIG_SCHEMA = cv.All(
         cv.Optional(CONF_VISUAL, default={}): cv.Schema({
             cv.Optional("min_temperature", default=12): cv.temperature,
             cv.Optional("max_temperature", default=29): cv.temperature,
-            cv.Optional("temperature_step", default=0.5): cv.positive_float,
+            cv.Optional("temperature_step", default={CONF_TARGET_TEMPERATURE: 0.5}): cv.Schema({
+                cv.Optional(CONF_TARGET_TEMPERATURE, default=0.5): cv.positive_float,
+            }),
         }),
     })
     .extend(comfod_sensors_schemas)
