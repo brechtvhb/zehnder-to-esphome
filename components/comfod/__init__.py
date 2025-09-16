@@ -2,7 +2,7 @@
 import esphome.config_validation as cv
 import esphome.codegen as cg
 from esphome.components import binary_sensor, sensor, uart, climate
-from esphome.const import (CONF_ID, DEVICE_CLASS_CURRENT,
+from esphome.const import (CONF_ID, DEVICE_CLASS_CURRENT, CONF_DISABLED_BY_DEFAULT,
                            DEVICE_CLASS_EMPTY, DEVICE_CLASS_SPEED,
                            DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_VOLUME,
                            STATE_CLASS_MEASUREMENT, UNIT_AMPERE, UNIT_CELSIUS,
@@ -116,6 +116,7 @@ CONFIG_SCHEMA = cv.All(
         cv.Required(REQUIRED_KEY_NAME): cv.string,
         cv.Required(REQUIRED_KEY_UART_COMFOD): cv.use_id(uart.UARTComponent),
         cv.Optional(REQUIRED_KEY_UART_COMFOSENSE): cv.use_id(uart.UARTComponent), 
+        cv.Optional(CONF_DISABLED_BY_DEFAULT, default=False): cv.boolean,
     })
     .extend(comfod_sensors_schemas)
     .extend(cv.COMPONENT_SCHEMA)
