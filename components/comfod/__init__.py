@@ -1,7 +1,7 @@
 """ Creates module comfod """
 import esphome.config_validation as cv
 import esphome.codegen as cg
-from esphome.components import binary_sensor, sensor, uart
+from esphome.components import binary_sensor, sensor, uart, climate
 from esphome.const import (CONF_ID, DEVICE_CLASS_CURRENT,
                            DEVICE_CLASS_EMPTY, DEVICE_CLASS_SPEED,
                            DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_VOLUME,
@@ -10,6 +10,7 @@ from esphome.const import (CONF_ID, DEVICE_CLASS_CURRENT,
                            UNIT_PERCENT, UNIT_REVOLUTIONS_PER_MINUTE)
 
 comfod_ns = cg.esphome_ns.namespace('comfod')
+climate_ns = cg.esphome_ns.namespace("climate")
 ComfoDComponent = comfod_ns.class_('ComfoDComponent', cg.Component)
 
 DEPENDENCIES=['uart']
@@ -122,7 +123,9 @@ CONFIG_SCHEMA = cv.All(
 
 async def to_code(config):
     """Generates code"""
-    var = cg.new_Pvariable(config[CONF_ID])
+    # var = cg.new_Pvariable(config[CONF_ID])
+    var = await climate.new_climate(config)
+
     uart_comfod = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
     uart_comfosense = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
 
@@ -131,11 +134,7 @@ async def to_code(config):
     
     await cg.register_component(var, config)
     cg.add(var.set_name(config[REQUIRED_KEY_NAME]))
-    # uart_comfod = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
-    # uart_comfosense = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
-    # cg.add(var.set_uart_comfod(uart_comfod))
-    # cg.add(var.set_uart_comfosense(uart_comfosense))
-    
+
     sens = None
     if CONF_FAN_SUPPLY_AIR_PERCENTAGE in config:
         sensor_id = config[CONF_FAN_SUPPLY_AIR_PERCENTAGE]
@@ -298,6 +297,3 @@ async def to_code(config):
         sens = await sensor.new_sensor(sensor_id)
         func = getattr(var, 'set_'+ CONF_REHEATING_TARGET_TEMPERATURE)
         cg.add(func(sens))
-
-
-    cg.add(cg.App.register_climate(var))
