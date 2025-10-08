@@ -113,7 +113,7 @@ CONFIG_SCHEMA = cv.All(
         cv.Optional(REQUIRED_KEY_UART_COMFOSENSE): cv.use_id(uart.UARTComponent), 
     })
     .extend(comfod_sensors_schemas)
-    .extend(climate.climate_schema(ComfoDComponent))
+    .extend(climate.CLIMATE_SCHEMA)
     .extend(cv.COMPONENT_SCHEMA)
 )
 
