@@ -128,7 +128,7 @@ async def to_code(config):
     cg.add(var.set_uart_comfod(uart_comfod))
     cg.add(var.set_uart_comfosense(uart_comfosense))
     
-    await cg.register_component(var, config)
+    # await cg.register_component(var, config)
     cg.add(var.set_name(config[REQUIRED_KEY_NAME]))
 
     sens = None
