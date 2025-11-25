@@ -21,7 +21,7 @@ public:
   /// Return the traits of this controller.
   climate::ClimateTraits traits() override {
     auto traits = climate::ClimateTraits();
-    traits.set_supports_current_temperature(true);
+    traits.add_feature_flags(climate::ClimateTraits::FEATURE_CURRENT_TEMPERATURE);
     traits.set_visual_min_temperature(COMFOD_MIN_SUPPORTED_TEMP);
     traits.set_visual_max_temperature(COMFOD_MAX_SUPPORTED_TEMP);
     traits.set_visual_temperature_step(COMFOD_SUPPORTED_TEMP_STEP);
