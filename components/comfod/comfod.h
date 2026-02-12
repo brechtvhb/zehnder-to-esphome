@@ -202,7 +202,13 @@ public:
     write_command_(COMFOD_SET_RESET_REQUEST, reset_cmd, sizeof(reset_cmd));
   }
 
-  void set_name(const char* value) {name = value;}
+  void set_name(const char* value) { name = value; }
+  
+  // Accept the second parameter (object ID hash) so generated code compiles:
+  void set_name(const char* value, uint32_t object_id) {
+    name = value;
+  }
+
   void set_uart_comfod(uart::UARTComponent *uart_comfod) { this->uart_comfod = uart_comfod; }
   void set_uart_comfosense(uart::UARTComponent *uart_comfosense) { this->uart_comfosense = uart_comfosense; }
   
