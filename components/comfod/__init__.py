@@ -129,7 +129,6 @@ async def to_code(config):
     cg.add(var.set_uart_comfosense(uart_comfosense))
     
     await cg.register_component(var, config)
-    cg.add(var.set_name(config[REQUIRED_KEY_NAME]))
 
     sens = None
     if CONF_FAN_SUPPLY_AIR_PERCENTAGE in config:
