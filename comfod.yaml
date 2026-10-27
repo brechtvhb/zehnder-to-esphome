@@ -25,7 +25,7 @@ logger:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "ZUyvMHVGzJi68SJ08an99aqd0K3175eOysqGlNlp740="
+    key: !secret zehnder_comfo_d_api_key
 
 ota:
   - platform: esphome
@@ -37,7 +37,7 @@ wifi:
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "zehner-comfo-d-5De484"
-    password: "Nez2kNzpFx1K"
+    password: !secret wifi_ap_password
 
 captive_portal:
 
