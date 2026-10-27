@@ -2,18 +2,18 @@
 import esphome.config_validation as cv
 import esphome.codegen as cg
 from esphome.components import binary_sensor, sensor, uart, climate
-from esphome.const import *
+from esphome.const import (DEVICE_CLASS_EMPTY, DEVICE_CLASS_TEMPERATURE,
+                           DEVICE_CLASS_VOLUME, STATE_CLASS_MEASUREMENT,
+                           UNIT_CELSIUS, UNIT_CUBIC_METER, UNIT_PERCENT,
+                           UNIT_REVOLUTIONS_PER_MINUTE)
 
 comfod_ns = cg.esphome_ns.namespace('comfod')
-climate_ns = cg.esphome_ns.namespace("climate")
-ComfoDComponent = comfod_ns.class_('ComfoDComponent', cg.Component)
+ComfoDComponent = comfod_ns.class_('ComfoDComponent', climate.Climate, cg.PollingComponent)
 
 DEPENDENCIES=['uart']
 AUTO_LOAD = ['sensor', 'climate', 'binary_sensor']
-REQUIRED_KEY_NAME = "name"
 REQUIRED_KEY_UART_COMFOD = "uart_comfod_id"
-REQUIRED_KEY_UART_COMFOSENSE = "uart_comfosense_id"
-CONF_HUB_ID = 'comfod'
+OPTIONAL_KEY_UART_COMFOSENSE = "uart_comfosense_id"
 
 CONF_FAN_SUPPLY_AIR_PERCENTAGE = "fan_supply_air_percentage"
 CONF_FAN_EXHAUST_AIR_PERCENTAGE = "fan_exhaust_air_percentage"
@@ -44,251 +44,67 @@ CONF_EWT_SPEED_UP_PERCENTAGE = "ewt_speed_up_percentage"
 CONF_REHEATING_TARGET_TEMPERATURE = "reheating_target_temperature"
 CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE = "kitchen_hood_speed_up_percentage"
 
-helper_comfod_list = [
-    CONF_FAN_SUPPLY_AIR_PERCENTAGE,
-    CONF_FAN_EXHAUST_AIR_PERCENTAGE,
-    CONF_FAN_SPEED_SUPPLY,
-    CONF_FAN_SPEED_EXHAUST,
-    CONF_IS_BYPASS_VALVE_OPEN,
-    CONF_IS_PREHEATING,
-    CONF_OUTSIDE_AIR_TEMPERATURE,
-    CONF_SUPPLY_AIR_TEMPERATURE,
-    CONF_RETURN_AIR_TEMPERATURE,
-    CONF_EXHAUST_AIR_TEMPERATURE,
-    CONF_ENTHALPY_TEMPERATURE,
-    CONF_EWT_TEMPERATURE,
-    CONF_REHEATING_TEMPERATURE,
-    CONF_KITCHEN_HOOD_TEMPERATURE,
-    CONF_RETURN_AIR_LEVEL,
-    CONF_SUPPLY_AIR_LEVEL,
-    CONF_IS_SUPPLY_FAN_ACTIVE,
-    CONF_IS_FILTER_FULL,
-    CONF_BYPASS_FACTOR,
-    CONF_BYPASS_STEP,
-    CONF_BYPASS_CORRECTION,
-    CONF_IS_SUMMER_MODE,
-    CONF_EWT_LOW_TEMPERATURE,
-    CONF_EWT_HIGH_TEMPERATURE,
-    CONF_EWT_SPEED_UP_PERCENTAGE,
-    CONF_REHEATING_TARGET_TEMPERATURE,
-    CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE,
-]
+SENSORS = {
+    CONF_FAN_SUPPLY_AIR_PERCENTAGE: sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0),
+    CONF_FAN_EXHAUST_AIR_PERCENTAGE: sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0),
+    CONF_FAN_SPEED_SUPPLY: sensor.sensor_schema(unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE, accuracy_decimals=0),
+    CONF_FAN_SPEED_EXHAUST: sensor.sensor_schema(unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE, accuracy_decimals=0),
+    CONF_OUTSIDE_AIR_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_SUPPLY_AIR_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_RETURN_AIR_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_EXHAUST_AIR_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_ENTHALPY_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_EWT_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_REHEATING_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_KITCHEN_HOOD_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_RETURN_AIR_LEVEL: sensor.sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_CUBIC_METER, accuracy_decimals=0),
+    CONF_SUPPLY_AIR_LEVEL: sensor.sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_CUBIC_METER, accuracy_decimals=0),
+    CONF_BYPASS_FACTOR: sensor.sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_BYPASS_STEP: sensor.sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_BYPASS_CORRECTION: sensor.sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_EWT_LOW_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_EWT_HIGH_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_EWT_SPEED_UP_PERCENTAGE: sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=1),
+    CONF_REHEATING_TARGET_TEMPERATURE: sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT),
+    CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE: sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=1),
+}
 
-comfod_sensors_schemas = cv.Schema({
-cv.Optional(CONF_FAN_SUPPLY_AIR_PERCENTAGE): sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0).extend(),
-cv.Optional(CONF_FAN_EXHAUST_AIR_PERCENTAGE): sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0).extend(),
-cv.Optional(CONF_FAN_SPEED_SUPPLY): sensor.sensor_schema(unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE, accuracy_decimals=0).extend(),
-cv.Optional(CONF_FAN_SPEED_EXHAUST): sensor.sensor_schema(unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE, accuracy_decimals=0).extend(),
-cv.Optional(CONF_OUTSIDE_AIR_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_SUPPLY_AIR_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_RETURN_AIR_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_EXHAUST_AIR_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_ENTHALPY_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_EWT_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_REHEATING_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_KITCHEN_HOOD_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_RETURN_AIR_LEVEL): sensor.sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_CUBIC_METER, accuracy_decimals=0).extend(),
-cv.Optional(CONF_SUPPLY_AIR_LEVEL): sensor.sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_CUBIC_METER, accuracy_decimals=0).extend(),
-cv.Optional(CONF_BYPASS_FACTOR): sensor.sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_BYPASS_STEP): sensor.sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_BYPASS_CORRECTION): sensor.sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_PERCENT, accuracy_decimals=0, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_IS_BYPASS_VALVE_OPEN): binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY).extend(),
-cv.Optional(CONF_IS_PREHEATING): binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY).extend(),
-cv.Optional(CONF_IS_SUMMER_MODE): binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY).extend(),
-cv.Optional(CONF_IS_SUPPLY_FAN_ACTIVE): binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY).extend(),
-cv.Optional(CONF_IS_FILTER_FULL): binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY).extend(),
-cv.Optional(CONF_EWT_LOW_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_EWT_HIGH_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_EWT_SPEED_UP_PERCENTAGE): sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=1).extend(),
-cv.Optional(CONF_REHEATING_TARGET_TEMPERATURE): sensor.sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1, state_class=STATE_CLASS_MEASUREMENT).extend(),
-cv.Optional(CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE): sensor.sensor_schema(unit_of_measurement=UNIT_PERCENT, accuracy_decimals=1).extend(),
-})
+BINARY_SENSORS = {
+    CONF_IS_BYPASS_VALVE_OPEN: binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY),
+    CONF_IS_PREHEATING: binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY),
+    CONF_IS_SUMMER_MODE: binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY),
+    CONF_IS_SUPPLY_FAN_ACTIVE: binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY),
+    CONF_IS_FILTER_FULL: binary_sensor.binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY),
+}
 
 CONFIG_SCHEMA = cv.All(
-    cv
-    .Schema({
-        cv.GenerateID(CONF_ID): cv.declare_id(ComfoDComponent),
-        cv.Required(REQUIRED_KEY_NAME): cv.string,
+    climate.climate_schema(ComfoDComponent)
+    .extend({
         cv.Required(REQUIRED_KEY_UART_COMFOD): cv.use_id(uart.UARTComponent),
-        cv.Optional(REQUIRED_KEY_UART_COMFOSENSE): cv.use_id(uart.UARTComponent), 
+        cv.Optional(OPTIONAL_KEY_UART_COMFOSENSE): cv.use_id(uart.UARTComponent),
     })
-    .extend(comfod_sensors_schemas)
-    .extend(climate.climate_schema(ComfoDComponent))
-    .extend(cv.COMPONENT_SCHEMA)
+    .extend({cv.Optional(key): schema for key, schema in SENSORS.items()})
+    .extend({cv.Optional(key): schema for key, schema in BINARY_SENSORS.items()})
+    .extend(cv.polling_component_schema("1s"))
 )
 
 async def to_code(config):
     """Generates code"""
-    # var = cg.new_Pvariable(config[CONF_ID])
     var = await climate.new_climate(config)
-
-    uart_comfod = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
-    uart_comfosense = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOSENSE])
-
-    cg.add(var.set_uart_comfod(uart_comfod))
-    cg.add(var.set_uart_comfosense(uart_comfosense))
-    
     await cg.register_component(var, config)
 
-    sens = None
-    if CONF_FAN_SUPPLY_AIR_PERCENTAGE in config:
-        sensor_id = config[CONF_FAN_SUPPLY_AIR_PERCENTAGE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_FAN_SUPPLY_AIR_PERCENTAGE)
-        cg.add(func(sens))
+    uart_comfod = await cg.get_variable(config[REQUIRED_KEY_UART_COMFOD])
+    cg.add(var.set_uart_comfod(uart_comfod))
+    if OPTIONAL_KEY_UART_COMFOSENSE in config:
+        uart_comfosense = await cg.get_variable(config[OPTIONAL_KEY_UART_COMFOSENSE])
+        cg.add(var.set_uart_comfosense(uart_comfosense))
 
-    if CONF_FAN_EXHAUST_AIR_PERCENTAGE in config:
-        sensor_id = config[CONF_FAN_EXHAUST_AIR_PERCENTAGE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_FAN_EXHAUST_AIR_PERCENTAGE)
-        cg.add(func(sens))
+    for key in SENSORS:
+        if key in config:
+            sens = await sensor.new_sensor(config[key])
+            cg.add(getattr(var, 'set_' + key)(sens))
 
-    if CONF_FAN_SPEED_SUPPLY in config:
-        sensor_id = config[CONF_FAN_SPEED_SUPPLY]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_FAN_SPEED_SUPPLY)
-        cg.add(func(sens))
-
-    if CONF_FAN_SPEED_EXHAUST in config:
-        sensor_id = config[CONF_FAN_SPEED_EXHAUST]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_FAN_SPEED_EXHAUST)
-        cg.add(func(sens))
-
-    if CONF_OUTSIDE_AIR_TEMPERATURE in config:
-        sensor_id = config[CONF_OUTSIDE_AIR_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_OUTSIDE_AIR_TEMPERATURE)
-        cg.add(func(sens))
-
-    if CONF_SUPPLY_AIR_TEMPERATURE in config:
-        sensor_id = config[CONF_SUPPLY_AIR_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_SUPPLY_AIR_TEMPERATURE)
-        cg.add(func(sens))
-
-    if CONF_RETURN_AIR_TEMPERATURE in config:
-        sensor_id = config[CONF_RETURN_AIR_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_RETURN_AIR_TEMPERATURE)
-        cg.add(func(sens))
-
-    if CONF_EXHAUST_AIR_TEMPERATURE in config:
-        sensor_id = config[CONF_EXHAUST_AIR_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_EXHAUST_AIR_TEMPERATURE)
-        cg.add(func(sens))
-
-    if CONF_ENTHALPY_TEMPERATURE in config:
-        sensor_id = config[CONF_ENTHALPY_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_ENTHALPY_TEMPERATURE)
-        cg.add(func(sens))
-
-    if CONF_EWT_TEMPERATURE in config:
-        sensor_id = config[CONF_EWT_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_EWT_TEMPERATURE)
-        cg.add(func(sens))
-
-    if CONF_REHEATING_TEMPERATURE in config:
-        sensor_id = config[CONF_REHEATING_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_REHEATING_TEMPERATURE)
-        cg.add(func(sens))
-
-    if CONF_KITCHEN_HOOD_TEMPERATURE in config:
-        sensor_id = config[CONF_KITCHEN_HOOD_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_KITCHEN_HOOD_TEMPERATURE)
-        cg.add(func(sens))
-
-    if CONF_RETURN_AIR_LEVEL in config:
-        sensor_id = config[CONF_RETURN_AIR_LEVEL]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_RETURN_AIR_LEVEL)
-        cg.add(func(sens))
-
-    if CONF_SUPPLY_AIR_LEVEL in config:
-        sensor_id = config[CONF_SUPPLY_AIR_LEVEL]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_SUPPLY_AIR_LEVEL)
-        cg.add(func(sens))
-
-    if CONF_BYPASS_FACTOR in config:
-        sensor_id = config[CONF_BYPASS_FACTOR]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_BYPASS_FACTOR)
-        cg.add(func(sens))
-
-    if CONF_BYPASS_STEP in config:
-        sensor_id = config[CONF_BYPASS_STEP]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_BYPASS_STEP)
-        cg.add(func(sens))
-
-    if CONF_BYPASS_CORRECTION in config:
-        sensor_id = config[CONF_BYPASS_CORRECTION]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_BYPASS_CORRECTION)
-        cg.add(func(sens))
-
-    if CONF_IS_BYPASS_VALVE_OPEN in config:
-        sensor_id = config[CONF_IS_BYPASS_VALVE_OPEN]
-        sens = await binary_sensor.new_binary_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_IS_BYPASS_VALVE_OPEN)
-        cg.add(func(sens))
-
-    if CONF_IS_PREHEATING in config:
-        sensor_id = config[CONF_IS_PREHEATING]
-        sens = await binary_sensor.new_binary_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_IS_PREHEATING)
-        cg.add(func(sens))
-
-    if CONF_IS_SUMMER_MODE in config:
-        sensor_id = config[CONF_IS_SUMMER_MODE]
-        sens = await binary_sensor.new_binary_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_IS_SUMMER_MODE)
-        cg.add(func(sens))
-
-    if CONF_IS_SUPPLY_FAN_ACTIVE in config:
-        sensor_id = config[CONF_IS_SUPPLY_FAN_ACTIVE]
-        sens = await binary_sensor.new_binary_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_IS_SUPPLY_FAN_ACTIVE)
-        cg.add(func(sens))
-
-    if CONF_IS_FILTER_FULL in config:
-        sensor_id = config[CONF_IS_FILTER_FULL]
-        sens = await binary_sensor.new_binary_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_IS_FILTER_FULL)
-        cg.add(func(sens))
-
-    if CONF_EWT_LOW_TEMPERATURE in config:
-        sensor_id = config[CONF_EWT_LOW_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_EWT_LOW_TEMPERATURE)
-        cg.add(func(sens))
-
-    if CONF_EWT_HIGH_TEMPERATURE in config:
-        sensor_id = config[CONF_EWT_HIGH_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_EWT_HIGH_TEMPERATURE)
-        cg.add(func(sens))
-    
-    if CONF_EWT_SPEED_UP_PERCENTAGE in config:
-        sensor_id = config[CONF_EWT_SPEED_UP_PERCENTAGE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_EWT_SPEED_UP_PERCENTAGE)
-        cg.add(func(sens))
-    
-    if CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE in config:
-        sensor_id = config[CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_KITCHEN_HOOD_SPEED_UP_PERCENTAGE)
-        cg.add(func(sens))
-        
-    if CONF_REHEATING_TARGET_TEMPERATURE in config:
-        sensor_id = config[CONF_REHEATING_TARGET_TEMPERATURE]
-        sens = await sensor.new_sensor(sensor_id)
-        func = getattr(var, 'set_'+ CONF_REHEATING_TARGET_TEMPERATURE)
-        cg.add(func(sens))
+    for key in BINARY_SENSORS:
+        if key in config:
+            sens = await binary_sensor.new_binary_sensor(config[key])
+            cg.add(getattr(var, 'set_' + key)(sens))

@@ -75,8 +75,8 @@ binary_sensor:
 comfod:
   name: "Zehnder Comfo D"
   id: "zehnder_comfo_d"
-  uart_comfod_id: id(uart_comfod)
-  uart_comfosense_id: id(uart_comfosense)
+  uart_comfod_id: uart_comfod
+  uart_comfosense_id: uart_comfosense
   fan_supply_air_percentage:
     name: "fan_supply_air_percentage"
   fan_exhaust_air_percentage:
@@ -130,38 +130,47 @@ button:
 
 number:
   - platform: template
+    id: ewt_low_temperature_number
     name: "EWT low temperature"
     min_value: 0
     max_value: 15
     step: 0.5
-    mode : slider
+    mode: slider
+    update_interval: 10s
     lambda: |-
-      return id(zehnder_comfo_d)->ewt_low_temperature->state;
+      return id(zehnder_comfo_d)->get_ewt_low_temperature_value();
     set_action:
       then:
         - lambda: |-
             id(zehnder_comfo_d)->set_ewt_low_temperature_value(x);
+            id(ewt_low_temperature_number).publish_state(x);
   - platform: template
+    id: ewt_high_temperature_number
     name: "EWT high temperature"
     min_value: 10
     max_value: 25
     step: 0.5
-    mode : slider
+    mode: slider
+    update_interval: 10s
     lambda: |-
-      return id(zehnder_comfo_d)->ewt_high_temperature->state;
+      return id(zehnder_comfo_d)->get_ewt_high_temperature_value();
     set_action:
       then:
         - lambda: |-
             id(zehnder_comfo_d)->set_ewt_high_temperature_value(x);
+            id(ewt_high_temperature_number).publish_state(x);
   - platform: template
+    id: ewt_speed_up_percentage_number
     name: "EWT speed up percentage"
     min_value: 0
     max_value: 99
     step: 1
-    mode : slider
+    mode: slider
+    update_interval: 10s
     lambda: |-
-      return id(zehnder_comfo_d)->ewt_speed_up_percentage->state;
+      return id(zehnder_comfo_d)->get_ewt_speed_up_percentage_value();
     set_action:
       then:
         - lambda: |-
             id(zehnder_comfo_d)->set_ewt_speed_up_percentage_value(x);
+            id(ewt_speed_up_percentage_number).publish_state(x);

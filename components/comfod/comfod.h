@@ -1,18 +1,24 @@
 #pragma once
 
-#include "esphome.h"
+#include <algorithm>
+#include <cmath>
+#include <deque>
+#include <vector>
+
 #include "esphome/core/component.h"
+#include "esphome/core/helpers.h"
+#include "esphome/core/log.h"
 #include "esphome/components/uart/uart.h"
 #include "esphome/components/climate/climate.h"
-#include "esphome/components/climate/climate_mode.h"
-#include "esphome/components/climate/climate_traits.h"
 #include "esphome/components/sensor/sensor.h"
+#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "constants.h"
+#include "comfod_frame.h"
 
 namespace esphome {
 namespace comfod {
 
-class ComfoDComponent : public climate::Climate, public PollingComponent, public uart::UARTDevice {
+class ComfoDComponent : public climate::Climate, public PollingComponent {
 public:
 
   ComfoDComponent()
@@ -27,6 +33,7 @@ public:
     traits.set_visual_temperature_step(COMFOD_SUPPORTED_TEMP_STEP);
     traits.set_supported_modes({
       climate::CLIMATE_MODE_OFF,
+      climate::CLIMATE_MODE_AUTO,
       climate::CLIMATE_MODE_FAN_ONLY
     });
     traits.set_supported_fan_modes({
@@ -35,46 +42,41 @@ public:
       climate::CLIMATE_FAN_MEDIUM,
       climate::CLIMATE_FAN_HIGH,
       climate::CLIMATE_FAN_OFF,
-    }); 
+    });
     return traits;
   }
 
   /// Override control to change settings of the climate device.
   void control(const climate::ClimateCall &call) override {
-    if (call.get_fan_mode().has_value()) {
-      int level;
+    int level = -1;
 
-      fan_mode = *call.get_fan_mode();
-      switch (fan_mode.value()) {
-        case climate::CLIMATE_FAN_HIGH:
-          level = 0x04;
-          break;
-        case climate::CLIMATE_FAN_MEDIUM:
-          level = 0x03;
-          break;
-        case climate::CLIMATE_FAN_LOW:
-          level = 0x02;
-          break;
-        case climate::CLIMATE_FAN_OFF:
+    if (call.get_mode().has_value()) {
+      switch (*call.get_mode()) {
+        case climate::CLIMATE_MODE_OFF:
           level = 0x01;
           break;
-        case climate::CLIMATE_FAN_AUTO:
+        case climate::CLIMATE_MODE_AUTO:
           level = 0x00;
           break;
-        case climate::CLIMATE_FAN_FOCUS:
-        case climate::CLIMATE_FAN_ON:
-        case climate::CLIMATE_FAN_MIDDLE:
-        case climate::CLIMATE_FAN_DIFFUSE:
+        case climate::CLIMATE_MODE_FAN_ONLY:
+          level = fan_mode_to_level_(fan_mode.value_or(climate::CLIMATE_FAN_LOW));
+          if (level < 0x02)
+            level = 0x02;
+          break;
         default:
-          level = -1;
           break;
       }
-
-      if (level >= 0) {
-        set_level_(level);
-      }
-
     }
+
+    if (call.get_fan_mode().has_value()) {
+      level = fan_mode_to_level_(*call.get_fan_mode());
+    }
+
+    if (level >= 0) {
+      set_level_(level);
+      apply_level_(level);
+    }
+
     if (call.get_target_temperature().has_value()) {
       target_temperature = *call.get_target_temperature();
       set_comfort_temperature_(target_temperature);
@@ -87,6 +89,7 @@ public:
     uint8_t *p;
     ESP_LOGCONFIG(TAG, "COMFOD:");
     LOG_UPDATE_INTERVAL(this);
+    ESP_LOGCONFIG(TAG, "  ComfoSense proxy: %s", YESNO(uart_comfosense != nullptr));
     p = bootloader_version_;
     ESP_LOGCONFIG(TAG, "  Bootloader %.10s v%0d.%02d b%2d", p + 3, *p, *(p + 1), *(p + 2));
     p = firmware_version_;
@@ -103,21 +106,25 @@ public:
   }
 
   void update() override {
+    // Skip a poll rather than build up a backlog when the bus is busy.
+    if (tx_queue_.size() >= 2)
+      return;
+
     switch(update_counter_) {
       case -4:
         set_rs232_mode(3);
         break;
       case -3:
         ESP_LOGI(TAG, "Get bootloader version");
-        write_command_(COMFOD_GET_BOOTLOADER_VERSION_REQUEST, nullptr, 0);
+        request_(COMFOD_GET_BOOTLOADER_VERSION_REQUEST);
         break;
       case -2:
         ESP_LOGI(TAG, "Get firmware version");
-        write_command_(COMFOD_GET_FIRMWARE_VERSION_REQUEST, nullptr, 0);
+        request_(COMFOD_GET_FIRMWARE_VERSION_REQUEST);
         break;
       case -1:
         ESP_LOGI(TAG, "Get board version");
-        write_command_(COMFOD_GET_BOARD_VERSION_REQUEST, nullptr, 0);
+        request_(COMFOD_GET_BOARD_VERSION_REQUEST);
         break;
       case 0:
         get_fan_status_();
@@ -151,103 +158,81 @@ public:
   }
 
   void loop() override {
-    // Proxy commands from the display (ComfoSense -> ComfoD).
-    while(uart_comfosense->available() != 0) {
-      uart_comfosense->read_byte(&comfosense_data_[comfosense_data_index_]);
-      auto check = check_byte_(comfosense_data_, comfosense_data_index_);
-      if (!check.has_value()) {
-        ESP_LOGV(TAG, "Proxying command 0x%02X from ComfoSense to ComfoD with %i bytes.", comfosense_data_[COMFOD_MSG_IDENTIFIER_IDX], comfosense_data_index_+1);
-        uart_comfod->write_array(comfosense_data_, comfosense_data_index_+1);
-        uart_comfod->flush();
-        comfosense_data_index_ = 0;
-        break;
-      } else if (!*check) {
-        // wrong data
-        ESP_LOGD(TAG, "Byte %i of received data frame is invalid.", comfosense_data_index_);
-        comfosense_data_index_ = 0;
-      } else {
-        comfosense_data_index_++;
-      }
-    }
-
-    while (uart_comfod->available() != 0) {
-      uart_comfod->read_byte(&comfod_data_[comfod_data_index_]);
-      auto check = check_byte_(comfod_data_, comfod_data_index_);
-      if (!check.has_value()) {
-
-        // finished
-        if (comfod_data_[COMFOD_MSG_ACK_IDX] != COMFOD_MSG_ACK) {
-          parse_data_();
-        }
-        
-        ESP_LOGV(TAG, "Proxying response 0x%02X from ComfoD to ComfoSense with %i bytes.", comfod_data_[COMFOD_MSG_IDENTIFIER_IDX], comfod_data_index_+1);
-        uart_comfosense->write_array(comfod_data_, comfod_data_index_+1);
-        uart_comfosense->flush();
-        comfod_data_index_ = 0;
-      } else if (!*check) {
-        // wrong data
-        ESP_LOGD(TAG, "Byte %i of received data frame is invalid.", comfod_data_index_);
-        comfod_data_index_ = 0;
-      } else {
-        // next byte
-        comfod_data_index_++;
-      }
-    }
+    const uint32_t now = millis();
+    read_comfod_(now);
+    if (uart_comfosense != nullptr)
+      read_comfosense_(now);
+    send_next_command_(now);
   }
 
   float get_setup_priority() const override { return setup_priority::DATA; }
 
   void reset_filter(void) {
     uint8_t reset_cmd[COMFOD_SET_RESET_LENGTH] = {0, 0, 0, 1};
-    write_command_(COMFOD_SET_RESET_REQUEST, reset_cmd, sizeof(reset_cmd));
-  }
-
-  void set_name(const char* value) { name = value; }
-  
-  // Accept the second parameter (object ID hash) so generated code compiles:
-  void set_name(const char* value, uint32_t object_id) {
-    name = value;
+    send_command_(COMFOD_SET_RESET_REQUEST, reset_cmd, sizeof(reset_cmd));
   }
 
   void set_uart_comfod(uart::UARTComponent *uart_comfod) { this->uart_comfod = uart_comfod; }
   void set_uart_comfosense(uart::UARTComponent *uart_comfosense) { this->uart_comfosense = uart_comfosense; }
-  
-  void update_ewt_reheater_state_(uint8_t* msg) {
-  //set input numbers
-  if (ewt_low_temperature != nullptr && ewt_low_temperature->state != msg[0]) {
-    ewt_low_temperature->publish_state(msg[0]);
-  }
-  if (ewt_high_temperature != nullptr && ewt_high_temperature->state != msg[1]) {
-    ewt_high_temperature->publish_state(msg[1]);
-  }
-  if (ewt_speed_up_percentage != nullptr && ewt_speed_up_percentage->state != msg[2]) {
-    ewt_speed_up_percentage->publish_state(msg[2]);
-  }
 
-  //kitchen hood speed up %
-  if (kitchen_hood_speed_up_percentage != nullptr && kitchen_hood_speed_up_percentage->state != msg[3]) {
-    kitchen_hood_speed_up_percentage->publish_state(msg[3]);
-  }
-  // reheating target temperature
-  if (reheating_target_temperature != nullptr && reheating_target_temperature->state != msg[6]) {
-    reheating_target_temperature->publish_state(msg[6]);
-  }
-  }
+  // Last EWT / reheating settings read from the ComfoD, for template numbers.
+  optional<float> get_ewt_low_temperature_value() const { return ewt_reheating_setting_(0); }
+  optional<float> get_ewt_high_temperature_value() const { return ewt_reheating_setting_(1); }
+  optional<float> get_ewt_speed_up_percentage_value() const { return ewt_reheating_setting_(2); }
 
-  void set_ewt_low_temperature_value(float value) {
-    configure_ewt_reheating_settings_(value, ewt_high_temperature->state, ewt_speed_up_percentage->state, kitchen_hood_speed_up_percentage->state, reheating_target_temperature->state);
-    ewt_low_temperature->publish_state(value);
-  }
-  void set_ewt_high_temperature_value(float vlaue) {
-    configure_ewt_reheating_settings_(ewt_low_temperature->state, vlaue, ewt_speed_up_percentage->state, kitchen_hood_speed_up_percentage->state, reheating_target_temperature->state);
-    ewt_high_temperature->publish_state(vlaue);
-  }
-  void set_ewt_speed_up_percentage_value(int value) {
-    configure_ewt_reheating_settings_(ewt_low_temperature->state, ewt_high_temperature->state, value, kitchen_hood_speed_up_percentage->state, reheating_target_temperature->state);
-    ewt_speed_up_percentage->publish_state(value);
-  }
-  
+  void set_ewt_low_temperature_value(float value) { change_ewt_reheating_setting_(0, value); }
+  void set_ewt_high_temperature_value(float value) { change_ewt_reheating_setting_(1, value); }
+  void set_ewt_speed_up_percentage_value(int value) { change_ewt_reheating_setting_(2, value); }
+
  protected:
+
+  struct QueuedCommand {
+    std::vector<uint8_t> bytes;
+    // Response command to wait for, or 0 when the ComfoD only sends an ACK.
+    uint8_t response;
+  };
+
+  static int fan_mode_to_level_(climate::ClimateFanMode fan_mode) {
+    switch (fan_mode) {
+      case climate::CLIMATE_FAN_HIGH:
+        return 0x04;
+      case climate::CLIMATE_FAN_MEDIUM:
+        return 0x03;
+      case climate::CLIMATE_FAN_LOW:
+        return 0x02;
+      case climate::CLIMATE_FAN_OFF:
+        return 0x01;
+      case climate::CLIMATE_FAN_AUTO:
+        return 0x00;
+      default:
+        return -1;
+    }
+  }
+
+  void apply_level_(uint8_t level) {
+    switch (level) {
+      case 0x00:
+        fan_mode = climate::CLIMATE_FAN_AUTO;
+        mode = climate::CLIMATE_MODE_AUTO;
+        break;
+      case 0x01:
+        fan_mode = climate::CLIMATE_FAN_OFF;
+        mode = climate::CLIMATE_MODE_OFF;
+        break;
+      case 0x02:
+        fan_mode = climate::CLIMATE_FAN_LOW;
+        mode = climate::CLIMATE_MODE_FAN_ONLY;
+        break;
+      case 0x03:
+        fan_mode = climate::CLIMATE_FAN_MEDIUM;
+        mode = climate::CLIMATE_MODE_FAN_ONLY;
+        break;
+      case 0x04:
+        fan_mode = climate::CLIMATE_FAN_HIGH;
+        mode = climate::CLIMATE_MODE_FAN_ONLY;
+        break;
+    }
+  }
 
   void set_level_(int level) {
     if (level < 0 || level > 4) {
@@ -257,7 +242,8 @@ public:
 
     ESP_LOGI(TAG, "Setting level to: %i", level);
     uint8_t command[COMFOD_SET_LEVEL_LENGTH] = {(uint8_t) level};
-    write_command_(COMFOD_SET_LEVEL_REQUEST, command, sizeof(command));
+    send_command_(COMFOD_SET_LEVEL_REQUEST, command, sizeof(command));
+    request_(COMFOD_GET_VENTILATION_LEVEL_REQUEST);
   }
 
   void set_comfort_temperature_(float temperature) {
@@ -267,42 +253,61 @@ public:
     }
 
     ESP_LOGI(TAG, "Setting temperature to: %.1f", temperature);
-    
+
     uint8_t command[COMFOD_SET_COMFORT_TEMPERATURE_LENGTH] = {(uint8_t) ((temperature + 20.0f) * 2.0f)};
-    write_command_(COMFOD_SET_COMFORT_TEMPERATURE_REQUEST, command, sizeof(command));
+    send_command_(COMFOD_SET_COMFORT_TEMPERATURE_REQUEST, command, sizeof(command));
   }
 
-  void configure_ewt_reheating_settings_(float low_temperature, float high_temperature, int ewt_speed_up_percentage, int kitchen_hood_speed_up_percentage, int reheating_target_temperature) {
+  optional<float> ewt_reheating_setting_(uint8_t index) const {
+    if (!has_ewt_reheating_)
+      return {};
+    return (float) ewt_reheating_[index];
+  }
+
+  // index into the 0xEC response: 0 = EWT low, 1 = EWT high, 2 = EWT speed up %
+  void change_ewt_reheating_setting_(uint8_t index, float value) {
+    if (!has_ewt_reheating_) {
+      ESP_LOGW(TAG, "EWT/Reheating settings not read from the ComfoD yet, ignoring the change.");
+      return;
+    }
+    uint8_t settings[COMFOD_GET_EWT_REHEATER_LENGTH];
+    memcpy(settings, ewt_reheating_, sizeof(settings));
+    settings[index] = (uint8_t) std::lround(value);
+    configure_ewt_reheating_settings_(settings[0], settings[1], settings[2], settings[3], settings[6]);
+  }
+
+  void configure_ewt_reheating_settings_(int low_temperature, int high_temperature, int ewt_speed_up_percentage, int kitchen_hood_speed_up_percentage, int reheating_target_temperature) {
     if (low_temperature < 0 || low_temperature > 15) {
       ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. Low temperature: %i", low_temperature);
-      low_temperature = 0;
+      return;
     }
-    
+
     if (high_temperature < 10 || high_temperature > 25) {
       ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. High temperature: %i", high_temperature);
-      high_temperature = 25;
+      return;
     }
-    
+
     if (ewt_speed_up_percentage < 0 || ewt_speed_up_percentage > 99) {
       ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. Speed up percentage: %i", ewt_speed_up_percentage);
-      ewt_speed_up_percentage = 0;
+      return;
     }
-    
+
     if (kitchen_hood_speed_up_percentage < 0 || kitchen_hood_speed_up_percentage > 99) {
       ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. Kitchen hood speed up percentage: %i", kitchen_hood_speed_up_percentage);
-      kitchen_hood_speed_up_percentage = 0;
+      return;
     }
 
     if (reheating_target_temperature < 5 || reheating_target_temperature > 40) {
       ESP_LOGI(TAG, "Ignoring invalid EWT/Reheating configuration request. Reheater temperature: %i", reheating_target_temperature);
-      reheating_target_temperature = 5;
+      return;
     }
 
-    ESP_LOGI(TAG, "Configuring EWT & Reheater settings. Low Temperature: %.1f, High Temperature: %.1f, EWT speed up: %i%, Kitchen hood speed up percentage: %i%, Reheating target temperature: %i", low_temperature, high_temperature, ewt_speed_up_percentage, kitchen_hood_speed_up_percentage, reheating_target_temperature);
+    ESP_LOGI(TAG, "Configuring EWT & Reheater settings. Low temperature: %i, High temperature: %i, EWT speed up: %i%%, Kitchen hood speed up: %i%%, Reheating target temperature: %i", low_temperature, high_temperature, ewt_speed_up_percentage, kitchen_hood_speed_up_percentage, reheating_target_temperature);
     uint8_t command[COMFOD_SET_EWT_REHEATING_LENGTH] = {(uint8_t) low_temperature, (uint8_t) high_temperature, (uint8_t) ewt_speed_up_percentage, (uint8_t) kitchen_hood_speed_up_percentage, (uint8_t) reheating_target_temperature};
-    write_command_(COMFOD_SET_EWT_REHEATING_REQUEST, command, sizeof(command));
+    send_command_(COMFOD_SET_EWT_REHEATING_REQUEST, command, sizeof(command));
+    request_(COMFOD_GET_EWT_REHEATER_REQUEST);
   }
-  
+
   void set_rs232_mode(int mode) {
     if (mode < 0 || mode > 4) {
       ESP_LOGI(TAG, "Ignoring invalid mode request: %i", mode);
@@ -310,276 +315,269 @@ public:
     }
 
     ESP_LOGI(TAG, "Setting rs232 mode to: %i", mode);
-    uint8_t command[] = {(uint8_t) mode};
-    write_command_(COMFOD_SET_RS232_MODE_REQUEST, command, sizeof(command));
+    uint8_t command[COMFOD_SET_RS232_MODE_LENGTH] = {(uint8_t) mode};
+    send_command_(COMFOD_SET_RS232_MODE_REQUEST, command, sizeof(command), COMFOD_SET_RS232_MODE_RESPONSE);
   }
 
-  void write_command_(const uint8_t command, const uint8_t *command_data, uint8_t command_data_length) {
-    uart_comfod->write_byte(COMFOD_MSG_PREFIX);
-    uart_comfod->write_byte(COMFOD_MSG_HEAD);
-    uart_comfod->write_byte(0x00);
-    uart_comfod->write_byte(command);
-    uart_comfod->write_byte(command_data_length);
-    if (command_data_length > 0) {
-      uart_comfod->write_array(command_data, command_data_length);
-      uart_comfod->write_byte((command + command_data_length + comfod_checksum_(command_data, command_data_length)) & 0xff);
-    } else {
-      uart_comfod->write_byte(comfod_checksum_(&command, 1));
+  void request_(uint8_t command) {
+    send_command_(command, nullptr, 0, command + 1);
+  }
+
+  void send_command_(uint8_t command, const uint8_t *command_data, uint8_t command_data_length, uint8_t response = 0) {
+    if (tx_queue_.size() >= COMFOD_MAX_QUEUED_COMMANDS) {
+      ESP_LOGW(TAG, "Command queue full, dropping command 0x%02X", command);
+      return;
     }
-    uart_comfod->write_byte(COMFOD_MSG_PREFIX);
-    uart_comfod->write_byte(COMFOD_MSG_TAIL);
-    uart_comfod->flush();
+
+    QueuedCommand queued{{COMFOD_MSG_PREFIX, COMFOD_MSG_HEAD, 0x00, command, command_data_length}, response};
+    uint8_t checksum = 0xad + command + command_data_length;
+    for (uint8_t i = 0; i < command_data_length; i++) {
+      queued.bytes.push_back(command_data[i]);
+      if (command_data[i] == COMFOD_MSG_PREFIX)
+        queued.bytes.push_back(COMFOD_MSG_PREFIX);
+      checksum += command_data[i];
+    }
+    queued.bytes.push_back(checksum);
+    queued.bytes.push_back(COMFOD_MSG_PREFIX);
+    queued.bytes.push_back(COMFOD_MSG_TAIL);
+    tx_queue_.push_back(std::move(queued));
   }
 
-  uint8_t comfod_checksum_(const uint8_t *command_data, uint8_t length) const {
-    uint8_t sum = 0;
-    bool last_seven = false;
-    for (uint8_t i = 0; i < length; i++) {
-      if (command_data[i] == 0x07) {
-        if (last_seven) {
-          last_seven = false;
-          continue;
+  // The ComfoD handles one request at a time: only send when it is quiet and our previous request was answered.
+  void send_next_command_(uint32_t now) {
+    if (tx_queue_.empty())
+      return;
+    if (awaiting_reply_) {
+      if (now - last_tx_at_ < COMFOD_REPLY_TIMEOUT_MS)
+        return;
+      ESP_LOGD(TAG, "No reply to command 0x%02X", awaiting_command_);
+      awaiting_reply_ = false;
+    }
+    if (comfod_reader_.in_frame() || comfosense_reader_.in_frame())
+      return;
+    if (now - last_bus_activity_at_ < COMFOD_BUS_IDLE_MS)
+      return;
+
+    QueuedCommand &next = tx_queue_.front();
+    ESP_LOGV(TAG, "Sending command 0x%02X", next.bytes[COMFOD_MSG_IDENTIFIER_IDX]);
+    uart_comfod->write_array(next.bytes);
+    awaiting_reply_ = true;
+    awaiting_command_ = next.bytes[COMFOD_MSG_IDENTIFIER_IDX];
+    awaiting_response_ = next.response;
+    last_tx_at_ = now;
+    last_bus_activity_at_ = now;
+    tx_queue_.pop_front();
+  }
+
+  void read_comfod_(uint32_t now) {
+    uint8_t buffer[64];
+    size_t available;
+    while ((available = uart_comfod->available()) > 0) {
+      size_t length = std::min(available, sizeof(buffer));
+      if (!uart_comfod->read_array(buffer, length))
+        break;
+      last_bus_activity_at_ = now;
+
+      // The ComfoSense listens to the ComfoD directly, as if the ESP were not there.
+      if (uart_comfosense != nullptr)
+        uart_comfosense->write_array(buffer, length);
+
+      for (size_t i = 0; i < length; i++) {
+        auto result = comfod_reader_.feed(buffer[i], now);
+        log_reader_problems_(comfod_reader_, "ComfoD");
+        if (result == ComfoDFrameReader::ACK_RECEIVED) {
+          if (awaiting_reply_ && awaiting_response_ == 0)
+            awaiting_reply_ = false;
+        } else if (result == ComfoDFrameReader::FRAME_RECEIVED) {
+          if (awaiting_reply_ && comfod_reader_.command() == awaiting_response_)
+            awaiting_reply_ = false;
+          // Without a ComfoSense attached nobody else acknowledges the ComfoD.
+          if (uart_comfosense == nullptr)
+            uart_comfod->write_array(COMFOD_ACK, sizeof(COMFOD_ACK));
+          parse_data_();
         }
-        last_seven = true;
       }
-      sum += command_data[i];
     }
-    return sum + 0xad;
   }
 
-  optional<bool> check_byte_(uint8_t* data, uint8_t index) const {
-    const uint8_t byte = data[index];
+  // Forwards complete frames so they never interleave with commands of the ESP.
+  void read_comfosense_(uint32_t now) {
+    uint8_t buffer[64];
+    size_t available;
+    while ((available = uart_comfosense->available()) > 0) {
+      size_t length = std::min(available, sizeof(buffer));
+      if (!uart_comfosense->read_array(buffer, length))
+        break;
+      last_bus_activity_at_ = now;
 
-    if (index == 0)
-      return byte == COMFOD_MSG_PREFIX;
-
-    if (index == 1) {
-      if (byte == COMFOD_MSG_ACK)
-        return {};
-      else
-        return byte == COMFOD_MSG_HEAD;
-    }
-
-    if (index == 2)
-      return byte == 0x00;
-
-    if (index < COMFOD_MSG_HEAD_LENGTH)
-      return true;
-
-    uint8_t data_length = data[COMFOD_MSG_DATA_LENGTH_IDX];
-
-    if ((COMFOD_MSG_HEAD_LENGTH + data_length + COMFOD_MSG_TAIL_LENGTH) > sizeof(comfod_data_)) {
-      ESP_LOGW(TAG, "COMFOD message too large. %i was larger than %i", (COMFOD_MSG_HEAD_LENGTH + data_length + COMFOD_MSG_TAIL_LENGTH), sizeof(data));
-      return false;
-    }
-
-    if (index < COMFOD_MSG_HEAD_LENGTH + data_length)
-      return true;
-
-    if (index == COMFOD_MSG_HEAD_LENGTH + data_length) {
-      // checksum is without checksum bytes
-      uint8_t checksum = comfod_checksum_(data + 2, COMFOD_MSG_HEAD_LENGTH + data_length - 2);
-      if (checksum != byte) {
-        //ESP_LOG_BUFFER_HEX(TAG, data_, index+1);
-        ESP_LOGW(TAG, "COMFOD Checksum doesn't match: 0x%02X!=0x%02X", byte, checksum);
-        return false;
+      for (size_t i = 0; i < length; i++) {
+        auto result = comfosense_reader_.feed(buffer[i], now);
+        log_reader_problems_(comfosense_reader_, "ComfoSense");
+        if (result != ComfoDFrameReader::NONE) {
+          ESP_LOGV(TAG, "Proxying 0x%02X from ComfoSense to ComfoD", result == ComfoDFrameReader::ACK_RECEIVED ? COMFOD_MSG_ACK : comfosense_reader_.command());
+          uart_comfod->write_array(comfosense_reader_.raw(), comfosense_reader_.raw_length());
+        }
       }
-      return true;
     }
+  }
 
-    if (index == COMFOD_MSG_HEAD_LENGTH + data_length + 1)
-      return byte == COMFOD_MSG_PREFIX;
-
-    if (index == COMFOD_MSG_HEAD_LENGTH + data_length + 2) {
-      if (byte != COMFOD_MSG_TAIL)
-        return false;
+  void log_reader_problems_(ComfoDFrameReader &reader, const char *source) {
+    if (reader.take_dropped()) {
+      char hex[format_hex_pretty_size(ComfoDFrameReader::MAX_RAW_LENGTH)];
+      format_hex_pretty_to(hex, reader.dropped_raw(), reader.dropped_raw_length(), ' ');
+      ESP_LOGW(TAG, "Dropped frame from %s (%s): %s", source, reader.dropped_reason(), hex);
     }
+    uint32_t noise = reader.take_noise_bytes();
+    if (noise > 0)
+      ESP_LOGV(TAG, "Ignored %u byte(s) outside a frame from %s", (unsigned) noise, source);
+  }
 
-    return {};
+  static float decode_temperature_(uint8_t value) { return (float) value / 2.0f - 20.0f; }
+
+  static void publish_if_changed_(sensor::Sensor *sensor, float value) {
+    if (sensor != nullptr && sensor->get_raw_state() != value)
+      sensor->publish_state(value);
+  }
+
+  static void publish_if_changed_(binary_sensor::BinarySensor *sensor, bool value) {
+    if (sensor != nullptr)
+      sensor->publish_state(value);
   }
 
   void parse_data_() {
     status_clear_warning();
-    uint8_t *msg = &comfod_data_[COMFOD_MSG_HEAD_LENGTH];
+    const uint8_t command = comfod_reader_.command();
+    const uint8_t length = comfod_reader_.data_length();
+    const uint8_t *msg = comfod_reader_.data();
 
-    switch (comfod_data_[COMFOD_MSG_IDENTIFIER_IDX]) {
+    auto has_length = [&](uint8_t minimum) {
+      if (length >= minimum)
+        return true;
+      ESP_LOGD(TAG, "Ignoring response 0x%02X with %u data bytes, expected %u", command, length, minimum);
+      return false;
+    };
+
+    switch (command) {
       case COMFOD_GET_BOOTLOADER_VERSION_RESPONSE:
-        memcpy(bootloader_version_, msg, comfod_data_[COMFOD_MSG_DATA_LENGTH_IDX]);
+        memcpy(bootloader_version_, msg, std::min<size_t>(length, sizeof(bootloader_version_)));
         break;
       case COMFOD_GET_FIRMWARE_VERSION_RESPONSE:
-        memcpy(firmware_version_, msg, comfod_data_[COMFOD_MSG_DATA_LENGTH_IDX]);
+        memcpy(firmware_version_, msg, std::min<size_t>(length, sizeof(firmware_version_)));
         break;
       case COMFOD_GET_BOARD_VERSION_RESPONSE:
-        memcpy(connector_board_version_, msg, comfod_data_[COMFOD_MSG_DATA_LENGTH_IDX]);
+        memcpy(connector_board_version_, msg, std::min<size_t>(length, sizeof(connector_board_version_)));
         break;
       case COMFOD_GET_FAN_STATUS_RESPONSE: {
-          if (fan_supply_air_percentage != nullptr && fan_supply_air_percentage->state != msg[0]) {
-            fan_supply_air_percentage->publish_state(msg[0]);
-          }
-          if (fan_exhaust_air_percentage != nullptr && fan_exhaust_air_percentage->state != msg[1]) {
-            fan_exhaust_air_percentage->publish_state(msg[1]);
-          }
-          if (fan_speed_supply != nullptr && fan_speed_supply->state != std::round(1875000.0f / get_uint16_(2))) {
-            fan_speed_supply->publish_state(std::round(1875000.0f / get_uint16_(2)));
-          }
-          if (fan_speed_exhaust != nullptr && fan_speed_exhaust->state != std::round(1875000.0f / get_uint16_(4))) {
-            fan_speed_exhaust->publish_state(std::round(1875000.0f / get_uint16_(4)));
-          }
+        if (!has_length(COMFOD_GET_FAN_STATUS_LENGTH))
           break;
-        }
+        publish_if_changed_(fan_supply_air_percentage, msg[0]);
+        publish_if_changed_(fan_exhaust_air_percentage, msg[1]);
+        uint16_t supply_period = encode_uint16(msg[2], msg[3]);
+        uint16_t exhaust_period = encode_uint16(msg[4], msg[5]);
+        publish_if_changed_(fan_speed_supply, supply_period == 0 ? 0.0f : std::round(1875000.0f / supply_period));
+        publish_if_changed_(fan_speed_exhaust, exhaust_period == 0 ? 0.0f : std::round(1875000.0f / exhaust_period));
+        break;
+      }
       case COMFOD_GET_VALVE_STATUS_RESPONSE: {
-        if (is_bypass_valve_open != nullptr) {
-          is_bypass_valve_open->publish_state(msg[0] != 0 && msg[0] != 255);
-        }
-        if (is_preheating != nullptr) {
-            is_preheating->publish_state(msg[1] == 1);
-        }
+        if (!has_length(2))
+          break;
+        publish_if_changed_(is_bypass_valve_open, msg[0] != 0 && msg[0] != 255);
+        publish_if_changed_(is_preheating, msg[1] == 1);
         break;
       }
       case COMFOD_GET_BYPASS_CONTROL_RESPONSE: {
-        if (bypass_factor != nullptr) {
-          bypass_factor->publish_state(msg[2]);
-        }
-        if (bypass_step != nullptr) {
-          bypass_step->publish_state(msg[3]);
-        }
-        if (bypass_correction != nullptr) {
-          bypass_correction->publish_state(msg[4]);
-        }
-        if (is_summer_mode != nullptr) {
-          is_summer_mode->publish_state(msg[6] != 0);
-        }
+        if (!has_length(COMFOD_GET_BYPASS_CONTROL_LENGTH))
+          break;
+        publish_if_changed_(bypass_factor, msg[2]);
+        publish_if_changed_(bypass_step, msg[3]);
+        publish_if_changed_(bypass_correction, msg[4]);
+        publish_if_changed_(is_summer_mode, msg[6] != 0);
         break;
       }
       case COMFOD_GET_TEMPERATURE_RESPONSE: {
-
-        // T1 / outside air
-        if (outside_air_temperature != nullptr) {
-          outside_air_temperature->publish_state((float) msg[0] / 2.0f - 20.0f);
-        }
-        // T2 / supply air
-        if (supply_air_temperature != nullptr) {
-          supply_air_temperature->publish_state((float) msg[1] / 2.0f - 20.0f);
-        }
-        // T3 / return air
-        if (return_air_temperature != nullptr) {
-          return_air_temperature->publish_state((float) msg[2] / 2.0f - 20.0f);
-        }
-        // T4 / exhaust air
-        if (exhaust_air_temperature != nullptr) {
-          exhaust_air_temperature->publish_state((float) msg[3] / 2.0f - 20.0f);
-        }
+        if (!has_length(COMFOD_GET_TEMPERATURE_LENGTH))
+          break;
+        publish_if_changed_(outside_air_temperature, decode_temperature_(msg[0]));
+        publish_if_changed_(supply_air_temperature, decode_temperature_(msg[1]));
+        publish_if_changed_(return_air_temperature, decode_temperature_(msg[2]));
+        publish_if_changed_(exhaust_air_temperature, decode_temperature_(msg[3]));
         break;
       }
       case COMFOD_GET_SENSOR_DATA_RESPONSE: {
-
-        if (enthalpy_temperature != nullptr) {
-          enthalpy_temperature->publish_state((float) msg[0] / 2.0f - 20.0f);
-        }
-
+        if (!has_length(1))
+          break;
+        publish_if_changed_(enthalpy_temperature, decode_temperature_(msg[0]));
         break;
       }
       case COMFOD_GET_VENTILATION_LEVEL_RESPONSE: {
-
+        if (!has_length(10))
+          break;
         ESP_LOGV(TAG, "Level %02x", msg[8]);
 
-        if (return_air_level != nullptr && return_air_level->state != msg[6]) {
-          return_air_level->publish_state(msg[6]);
-        }
-        if (supply_air_level != nullptr && supply_air_level->state != msg[7]) {
-          supply_air_level->publish_state(msg[7]);
-        }
+        publish_if_changed_(return_air_level, msg[6]);
+        publish_if_changed_(supply_air_level, msg[7]);
 
         auto current_fan_mode = fan_mode;
         auto current_mode = mode;
-        // Fan Speed
-        switch(msg[8]) {
-          case 0x00:
-            fan_mode = climate::CLIMATE_FAN_AUTO;
-            mode = climate::CLIMATE_MODE_AUTO;
-            break;
-          case 0x01:
-            fan_mode = climate::CLIMATE_FAN_OFF;
-            mode = climate::CLIMATE_MODE_OFF;
-            break;
-          case 0x02:
-            fan_mode = climate::CLIMATE_FAN_LOW;
-            mode = climate::CLIMATE_MODE_FAN_ONLY;
-            break;
-          case 0x03:
-            fan_mode = climate::CLIMATE_FAN_MEDIUM;
-            mode = climate::CLIMATE_MODE_FAN_ONLY;
-          break;
-          case 0x04:
-            fan_mode = climate::CLIMATE_FAN_HIGH;
-            mode = climate::CLIMATE_MODE_FAN_ONLY;
-            break;
-        }
-
+        apply_level_(msg[8]);
         if (fan_mode != current_fan_mode || mode != current_mode) {
           publish_state();
         }
 
         // Supply air fan active (1 = active / 0 = inactive)
-        if (is_supply_fan_active != nullptr) {
-          is_supply_fan_active->publish_state(msg[9] == 1);
-        }
+        publish_if_changed_(is_supply_fan_active, msg[9] == 1);
         break;
       }
       case COMFOD_GET_ERROR_STATE_RESPONSE: {
-        if (is_filter_full != nullptr) {
-          is_filter_full->publish_state(msg[8] != 0);
-        }
+        if (!has_length(9))
+          break;
+        publish_if_changed_(is_filter_full, msg[8] != 0);
         break;
       }
       case COMFOD_GET_TEMPERATURES_RESPONSE: {
+        if (!has_length(COMFOD_GET_TEMPERATURES_LENGTH))
+          break;
 
         auto current_target_temperature = target_temperature;
         auto current_current_temperature = current_temperature;
 
-        // comfort temperature
-        target_temperature = (float) msg[0] / 2.0f - 20.0f;
-        //indoor temperature
-        current_temperature = (float) msg[3] / 2.0f - 20.0f;
+        target_temperature = decode_temperature_(msg[0]);
+        // T3 / return air is the indoor temperature
+        current_temperature = decode_temperature_(msg[3]);
 
-        //Not yet known on startup, causes MQTT error (Invalid fan_modes mode:, Invalid modes mode:) STILL NOT SOLVED
-        if ((fan_mode && mode) && (current_target_temperature != target_temperature || current_current_temperature != current_temperature)) {
+        // Wait for the ventilation level so the first state carries a valid fan mode.
+        if (fan_mode.has_value() && (current_target_temperature != target_temperature || current_current_temperature != current_temperature)) {
           publish_state();
         }
 
-        // T1 / outside air
-        if (outside_air_temperature != nullptr && outside_air_temperature->state != (float) msg[1] / 2.0f - 20.0f && msg[5] & 0x01) {
-          outside_air_temperature->publish_state((float) msg[1] / 2.0f - 20.0f);
-        }
-        // T2 / supply air
-        if (supply_air_temperature != nullptr && supply_air_temperature->state != (float) msg[2] / 2.0f - 20.0f && msg[5] & 0x02) {
-          supply_air_temperature->publish_state((float) msg[2] / 2.0f - 20.0f);
-        }
-        // T3 / returned air
-        if (return_air_temperature != nullptr && return_air_temperature->state != (float) msg[3] / 2.0f - 20.0f && msg[5] & 0x04) {
-          return_air_temperature->publish_state((float) msg[3] / 2.0f - 20.0f);
-        }
-        // T4 / exhaust air
-        if (exhaust_air_temperature != nullptr && exhaust_air_temperature->state != (float) msg[4] / 2.0f - 20.0f && msg[5] & 0x08) {
-          exhaust_air_temperature->publish_state((float) msg[4] / 2.0f - 20.0f);
-        }
-        // EWT
-        if (ewt_temperature != nullptr && ewt_temperature->state != (float) msg[6] / 2.0f - 20.0f && msg[5] & 0x10) {
-          ewt_temperature->publish_state((float) msg[6] / 2.0f - 20.0f);
-        }
-        // reheating
-        if (reheating_temperature != nullptr && reheating_temperature->state != (float) msg[7] / 2.0f - 20.0f && msg[5] & 0x20) {
-          reheating_temperature->publish_state((float) msg[7] / 2.0f - 20.0f);
-        }
-        // kitchen hood
-        if (kitchen_hood_temperature != nullptr && kitchen_hood_temperature->state != (float) msg[8] / 2.0f - 20.0f && msg[5] & 0x40) {
-          kitchen_hood_temperature->publish_state((float) msg[8] / 2.0f - 20.0f);
-        }
-
+        const uint8_t present = msg[5];
+        if (present & 0x01)
+          publish_if_changed_(outside_air_temperature, decode_temperature_(msg[1]));
+        if (present & 0x02)
+          publish_if_changed_(supply_air_temperature, decode_temperature_(msg[2]));
+        if (present & 0x04)
+          publish_if_changed_(return_air_temperature, decode_temperature_(msg[3]));
+        if (present & 0x08)
+          publish_if_changed_(exhaust_air_temperature, decode_temperature_(msg[4]));
+        if (present & 0x10)
+          publish_if_changed_(ewt_temperature, decode_temperature_(msg[6]));
+        if (present & 0x20)
+          publish_if_changed_(reheating_temperature, decode_temperature_(msg[7]));
+        if (present & 0x40)
+          publish_if_changed_(kitchen_hood_temperature, decode_temperature_(msg[8]));
         break;
       }
       case COMFOD_GET_EWT_REHEATER_RESPONSE: {
-        update_ewt_reheater_state_(msg);
+        if (!has_length(COMFOD_GET_EWT_REHEATER_LENGTH))
+          break;
+        memcpy(ewt_reheating_, msg, sizeof(ewt_reheating_));
+        has_ewt_reheating_ = true;
+        publish_if_changed_(ewt_low_temperature, msg[0]);
+        publish_if_changed_(ewt_high_temperature, msg[1]);
+        publish_if_changed_(ewt_speed_up_percentage, msg[2]);
+        publish_if_changed_(kitchen_hood_speed_up_percentage, msg[3]);
+        publish_if_changed_(reheating_target_temperature, msg[6]);
+        break;
       }
     }
   }
@@ -587,84 +585,74 @@ public:
   void get_fan_status_() {
     if (fan_supply_air_percentage != nullptr || fan_exhaust_air_percentage != nullptr || fan_speed_supply != nullptr || fan_speed_exhaust != nullptr) {
       ESP_LOGV(TAG, "getting fan status");
-      write_command_(COMFOD_GET_FAN_STATUS_REQUEST, nullptr, 0);
+      request_(COMFOD_GET_FAN_STATUS_REQUEST);
     }
   }
 
   void get_valve_status_() {
     if (is_bypass_valve_open != nullptr || is_preheating != nullptr) {
       ESP_LOGV(TAG, "getting valve status");
-      write_command_(COMFOD_GET_VALVE_STATUS_REQUEST, nullptr, 0);
+      request_(COMFOD_GET_VALVE_STATUS_REQUEST);
     }
   }
 
   void get_error_status_() {
     if (is_filter_full != nullptr) {
       ESP_LOGV(TAG, "getting error status");
-      write_command_(COMFOD_GET_ERROR_STATE_REQUEST, nullptr, 0);
+      request_(COMFOD_GET_ERROR_STATE_REQUEST);
     }
   }
 
   void get_bypass_control_status_() {
     if (bypass_factor != nullptr || bypass_step != nullptr || bypass_correction != nullptr || is_summer_mode != nullptr) {
       ESP_LOGV(TAG, "getting bypass control");
-      write_command_(COMFOD_GET_BYPASS_CONTROL_REQUEST, nullptr, 0);
+      request_(COMFOD_GET_BYPASS_CONTROL_REQUEST);
     }
   }
 
+  // Always polled: changing an EWT setting resends the other settings from this response.
   void get_ewt_reheating_status_() {
-    if (kitchen_hood_speed_up_percentage != nullptr || reheating_target_temperature != nullptr) {
-      ESP_LOGV(TAG, "getting ewt reheating status");
-      write_command_(COMFOD_GET_EWT_REHEATER_REQUEST, nullptr, 0);
-    }
-  }
-  void get_temperature_() {
-    if (outside_air_temperature != nullptr || supply_air_temperature != nullptr || return_air_temperature != nullptr || outside_air_temperature != nullptr) {
-      ESP_LOGV(TAG, "getting temperature");
-      write_command_(COMFOD_GET_TEMPERATURE_REQUEST, nullptr, 0);
-    }
+    ESP_LOGV(TAG, "getting ewt reheating status");
+    request_(COMFOD_GET_EWT_REHEATER_REQUEST);
   }
 
   void get_sensor_data_() {
     if (enthalpy_temperature != nullptr) {
       ESP_LOGV(TAG, "getting sensor data");
-      write_command_(COMFOD_GET_SENSOR_DATA_REQUEST, nullptr, 0);
+      request_(COMFOD_GET_SENSOR_DATA_REQUEST);
     }
   }
 
   void get_ventilation_level_() {
     ESP_LOGV(TAG, "getting ventilation level");
-    write_command_(COMFOD_GET_VENTILATION_LEVEL_REQUEST, nullptr, 0);
+    request_(COMFOD_GET_VENTILATION_LEVEL_REQUEST);
   }
 
   void get_temperatures_() {
     ESP_LOGV(TAG, "getting temperatures");
-    write_command_(COMFOD_GET_TEMPERATURES_REQUEST, nullptr, 0);
+    request_(COMFOD_GET_TEMPERATURES_REQUEST);
   }
 
-  uint8_t get_uint8_t_(uint8_t start_index) const {
-    return comfod_data_[COMFOD_MSG_HEAD_LENGTH + start_index];
-  }
+  ComfoDFrameReader comfod_reader_;
+  ComfoDFrameReader comfosense_reader_;
+  std::deque<QueuedCommand> tx_queue_;
+  bool awaiting_reply_{false};
+  uint8_t awaiting_command_{0};
+  uint8_t awaiting_response_{0};
+  uint32_t last_tx_at_{0};
+  uint32_t last_bus_activity_at_{0};
 
-  uint16_t get_uint16_(uint8_t start_index) const {
-    return (uint16_t(comfod_data_[COMFOD_MSG_HEAD_LENGTH + start_index + 1] | comfod_data_[COMFOD_MSG_HEAD_LENGTH + start_index] << 8));
-  }
-
-  uint8_t comfod_data_[30];
-  uint8_t comfod_data_index_{0};
-  uint8_t comfosense_data_[30];
-  uint8_t comfosense_data_index_{0};
-  
   int8_t update_counter_{-10};
 
   uint8_t bootloader_version_[13]{0};
   uint8_t firmware_version_[13]{0};
   uint8_t connector_board_version_[14]{0};
-  const char* name{0};
-  
-  uart::UARTComponent* uart_comfod;
-  uart::UARTComponent* uart_comfosense;
-  
+  uint8_t ewt_reheating_[COMFOD_GET_EWT_REHEATER_LENGTH]{0};
+  bool has_ewt_reheating_{false};
+
+  uart::UARTComponent *uart_comfod{nullptr};
+  uart::UARTComponent *uart_comfosense{nullptr};
+
 public:
   sensor::Sensor *fan_supply_air_percentage{nullptr};
   sensor::Sensor *fan_exhaust_air_percentage{nullptr};
@@ -684,7 +672,7 @@ public:
   sensor::Sensor *supply_air_level{nullptr};
   binary_sensor::BinarySensor *is_supply_fan_active{nullptr};
   binary_sensor::BinarySensor *is_filter_full{nullptr};
-  
+
   sensor::Sensor *bypass_factor{nullptr};
   sensor::Sensor *bypass_step{nullptr};
   sensor::Sensor *bypass_correction{nullptr};

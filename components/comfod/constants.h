@@ -1,6 +1,7 @@
 #ifndef __constants_h__
 #define __constants_h__
 
+#include <stddef.h>
 #include <stdint.h>
 
 namespace esphome {
@@ -17,6 +18,12 @@ static const uint8_t COMFOD_MSG_ACK = 0xf3;
 static const uint8_t COMFOD_MSG_IDENTIFIER_IDX = 3;
 static const uint8_t COMFOD_MSG_DATA_LENGTH_IDX = 4;
 static const uint8_t COMFOD_MSG_ACK_IDX = 1;
+static const uint8_t COMFOD_ACK[] = {COMFOD_MSG_PREFIX, COMFOD_MSG_ACK};
+
+static const size_t COMFOD_MAX_QUEUED_COMMANDS = 8;
+static const uint32_t COMFOD_REPLY_TIMEOUT_MS = 500;
+// Quiet time on the bus before the ESP sends, so it doesn't talk over a ComfoSense exchange.
+static const uint32_t COMFOD_BUS_IDLE_MS = 30;
 
 static const uint8_t COMFOD_GET_BOOTLOADER_VERSION_REQUEST = 0x67;
 static const uint8_t COMFOD_GET_BOOTLOADER_VERSION_RESPONSE = 0x68;
